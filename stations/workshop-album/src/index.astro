@@ -1,0 +1,94 @@
+---
+/**
+ * One Workshop project as a full album: cover (the shelf item morphs into
+ * it), pressing info, tracklist, credits, liner notes (the write-up), links.
+ */
+import { PROJECT_STATUS_LABELS, getProject } from '@bar/content';
+import type { StationContext } from '@bar/core';
+import { ArrowIcon, Button, Cassette, FactList, Pill, SleeveArt, Tracklist } from '@bar/ui';
+import './workshop-album.css';
+
+export type Props = StationContext;
+const { params } = Astro.props;
+const project = getProject(params.slug ?? '');
+if (!project) throw new Error(`workshop-album: no project for slug "${params.slug}".`);
+
+const facts = [
+  { label: 'Catalog', value: project.catalog },
+  { label: 'Year', value: String(project.year) },
+  { label: 'Format', value: project.pressing.format },
+  ...(project.pressing.stack.length
+    ? [{ label: 'Stack', value: project.pressing.stack.join(', ') }]
+    : []),
+  ...(project.pressing.runtime ? [{ label: 'Runtime', value: project.pressing.runtime }] : []),
+];
+const transitionName = `project-${project.slug}`;
+---
+
+<article class="album" data-status={project.status} aria-labelledby="album-title">
+  <a class="album__back" href="/workshop">
+    <span class="album__back-arrow">
+      <ArrowIcon />
+    </span>{' '}
+    Workshop
+  </a>
+  <div class="album__body">
+    <div class="album__cover">
+      {project.status === 'demo' ? (
+        <Cassette
+          label={project.title}
+          sublabel={`Demo · ${project.year}`}
+          transitionName={transitionName}
+        />
+      ) : (
+        <div class="album__sleeve" style={`view-transition-name: ${transitionName}`}>
+          <SleeveArt seed={project.slug} label={`Cover art for ${project.title}`} />
+        </div>
+      )}
+    </div>
+    <div class="album__notes">
+      <p class="album__kicker">{project.catalog}</p>
+      <h1 id="album-title" class="album__title">
+        {project.title}
+      </h1>
+      <div>
+        <Pill dot={project.status}>{PROJECT_STATUS_LABELS[project.status]}</Pill>
+      </div>
+      <p class="album__summary">{project.summary}</p>
+      <FactList facts={facts} />
+      {project.links.length > 0 && (
+        <div class="album__actions">
+          {project.links.map((link, index) => (
+            <Button href={link.href} variant={index === 0 ? 'solid' : 'outline'}>
+              {link.label}
+            </Button>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+  <div class="album__sides">
+    <section aria-labelledby="album-tracklist">
+      <h2 id="album-tracklist" class="album__subhead">
+        Tracklist
+      </h2>
+      <Tracklist tracks={project.tracklist} />
+    </section>
+    <section aria-labelledby="album-liner">
+      <h2 id="album-liner" class="album__subhead">
+        Liner notes
+      </h2>
+      <div class="album__prose" set:html={project.html} />
+      {project.credits.length > 0 && (
+        <dl class="album__credits">
+          {project.credits.map((credit) => (
+            <div>
+              <dt>{credit.role}</dt>
+              <dd>{credit.name}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </section>
+  </div>
+</article>
