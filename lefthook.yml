@@ -1,0 +1,16 @@
+# Git hooks. Installed by `pnpm install` (prepare script).
+pre-commit:
+  parallel: true
+  commands:
+    format:
+      glob: '*.{js,ts,tsx,astro,json,css,yml,yaml}'
+      run: pnpm exec prettier --write --ignore-unknown {staged_files}
+      stage_fixed: true
+    typecheck:
+      glob: '*.{ts,tsx,astro}'
+      run: pnpm exec turbo run typecheck --affected --output-logs=errors-only
+
+commit-msg:
+  commands:
+    commitlint:
+      run: pnpm exec commitlint --edit {1}

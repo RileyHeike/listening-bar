@@ -1,0 +1,52 @@
+{
+  "name": "listening-bar",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.28.5",
+  "engines": {
+    "node": ">=24.21.0 <25"
+  },
+  "scripts": {
+    "dev": "turbo run dev --filter=@bar/web",
+    "dev:site": "turbo run dev:site --filter=@bar/web",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint && pnpm run lint:root",
+    "lint:root": "eslint --max-warnings=0 \"*.config.js\" && prettier --check .",
+    "format": "prettier --write .",
+    "gen": "tsx tools/generators/cli.ts",
+    "sandbox:deploy": "pnpm --filter @bar/infra run sandbox:deploy",
+    "sandbox:watch": "pnpm --filter @bar/infra run sandbox:watch",
+    "prepare": "lefthook install"
+  },
+  "devDependencies": {
+    "@bar/tokens": "workspace:*",
+    "@commitlint/cli": "21.2.3",
+    "@commitlint/config-conventional": "21.2.3",
+    "@eslint/js": "10.0.1",
+    "@turbo/gen": "2.11.7",
+    "@types/node": "24.19.2",
+    "astro": "7.3.8",
+    "eslint": "10.12.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-import-resolver-typescript": "4.4.5",
+    "eslint-plugin-astro": "3.2.1",
+    "eslint-plugin-import-x": "4.17.1",
+    "eslint-plugin-jsx-a11y-x": "0.2.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.13.0",
+    "lefthook": "2.2.1",
+    "postcss-html": "2.0.0",
+    "prettier": "3.9.9",
+    "prettier-plugin-astro": "1.1.1",
+    "stylelint": "17.16.0",
+    "stylelint-config-standard": "40.0.0",
+    "tsx": "4.23.15",
+    "turbo": "2.11.7",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.1",
+    "vitest": "5.0.3"
+  }
+}

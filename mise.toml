@@ -1,0 +1,6 @@
+# Pinned tool versions. Run `mise install` after cloning.
+[tools]
+node = "24.21.0"
+pnpm = "11.28.5"
+awscli = "2"
+"npm:aws-cdk" = "2.1145.0"
