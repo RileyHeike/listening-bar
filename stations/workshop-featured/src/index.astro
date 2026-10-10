@@ -1,0 +1,72 @@
+---
+/**
+ * The featured release, laid out like an album: cover, pressing info,
+ * tracklist (milestones), credits, actions. Its cover is the hero the wall
+ * sleeve morphs into.
+ */
+import { PROJECT_STATUS_LABELS, getFeaturedProject } from '@bar/content';
+import type { StationContext } from '@bar/core';
+import { sleeveTransitionName } from '@bar/core';
+import { Button, FactList, Pill, SleeveArt, Tracklist } from '@bar/ui';
+import './workshop-featured.css';
+
+export type Props = StationContext;
+const project = getFeaturedProject();
+const facts = [
+  { label: 'Catalog', value: project.catalog },
+  { label: 'Pressed', value: String(project.year) },
+  { label: 'Format', value: project.pressing.format },
+  ...(project.pressing.stack.length
+    ? [{ label: 'Stack', value: project.pressing.stack.join(', ') }]
+    : []),
+  ...(project.pressing.runtime ? [{ label: 'Runtime', value: project.pressing.runtime }] : []),
+];
+---
+
+<section class="featured" aria-labelledby="featured-title">
+  <a
+    class="featured__cover"
+    href={`/workshop/${project.slug}`}
+    style={`view-transition-name: ${sleeveTransitionName('workshop-featured')}`}
+    aria-label={`${project.title}, read the liner notes`}
+  >
+    <SleeveArt seed={project.slug} />
+  </a>
+  <div class="featured__notes">
+    <p class="featured__kicker">Featured release</p>
+    <h2 id="featured-title" class="featured__title">
+      {project.title}
+    </h2>
+    <div class="featured__status">
+      <Pill dot={project.status}>{PROJECT_STATUS_LABELS[project.status]}</Pill>
+    </div>
+    <p class="featured__summary">{project.summary}</p>
+    <FactList facts={facts} />
+    <div class="featured__columns">
+      <div>
+        <h3 class="featured__subhead">Tracklist</h3>
+        <Tracklist tracks={project.tracklist} />
+      </div>
+      {project.credits.length > 0 && (
+        <div>
+          <h3 class="featured__subhead">Credits</h3>
+          <ul class="featured__credits">
+            {project.credits.map((credit) => (
+              <li>
+                <span>{credit.role}</span> {credit.name}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+    <div class="featured__actions">
+      <Button href={`/workshop/${project.slug}`}>Read the liner notes</Button>
+      {project.links.map((link) => (
+        <Button href={link.href} variant="outline">
+          {link.label}
+        </Button>
+      ))}
+    </div>
+  </div>
+</section>
