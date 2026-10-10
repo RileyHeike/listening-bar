@@ -1,0 +1,29 @@
+---
+import { PROJECT_STATUSES, PROJECT_STATUS_LABELS, getProjects } from '@bar/content';
+import type { StationContext } from '@bar/core';
+import Shelf from './Shelf.tsx';
+import './workshop-shelf.css';
+
+export type Props = StationContext;
+const items = getProjects()
+  .filter((project) => !project.featured)
+  .map(({ slug, title, summary, status, year, catalog }) => ({
+    slug,
+    title,
+    summary,
+    status,
+    year,
+    catalog,
+  }));
+const filters = PROJECT_STATUSES.map((status) => ({
+  status,
+  label: PROJECT_STATUS_LABELS[status],
+}));
+---
+
+<section class="shelf" aria-labelledby="shelf-title">
+  <h2 id="shelf-title" class="shelf__title">
+    On the shelf
+  </h2>
+  <Shelf client:visible items={items} filters={filters} />
+</section>
