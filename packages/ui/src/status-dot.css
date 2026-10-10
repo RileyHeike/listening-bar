@@ -1,0 +1,34 @@
+.bar-status-dot {
+  display: inline-block;
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--dot-color, var(--room-ink-soft));
+}
+
+.bar-status-dot[data-status='demo'] {
+  --dot-color: var(--room-status-demo);
+}
+
+.bar-status-dot[data-status='studio'] {
+  --dot-color: var(--room-status-studio);
+}
+
+.bar-status-dot[data-status='pressed'] {
+  --dot-color: var(--room-status-pressed);
+}
+
+.bar-status-dot[data-status='out'] {
+  --dot-color: var(--room-status-out);
+}
+
+.bar-status-dot[data-status='open'] {
+  --dot-color: var(--room-plant);
+
+  box-shadow: 0 0 0.4rem var(--room-plant);
+}
+
+.bar-status-dot[data-status='closed'] {
+  --dot-color: var(--room-status-out);
+}

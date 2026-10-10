@@ -1,0 +1,66 @@
+.bar-cassette {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 0.5rem;
+  aspect-ratio: 1.58;
+  padding: 0.6rem 0.7rem 0;
+  border-radius: 0.5rem;
+  background: var(--room-slate);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--room-ink) 10%, transparent),
+    0 0.6rem 1.2rem -0.6rem color-mix(in oklab, var(--room-bg) 70%, transparent);
+}
+
+.bar-cassette__label {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.35rem 0.6rem;
+  border-top: 0.35rem solid var(--room-status-demo);
+  border-radius: 0.2rem;
+  background: var(--room-paper);
+  color: var(--room-paper-ink);
+}
+
+.bar-cassette__title {
+  overflow: hidden;
+  font: 600 var(--type-md) / 1.1 var(--font-chalk);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.bar-cassette__sub {
+  font: 400 0.7rem / 1.2 var(--font-mono);
+  opacity: 0.75;
+}
+
+.bar-cassette__window {
+  align-self: center;
+  width: 70%;
+  margin: 0 auto;
+}
+
+.bar-cassette__glass {
+  fill: color-mix(in oklab, var(--room-paper) 12%, var(--room-slate));
+  stroke: color-mix(in oklab, var(--room-paper) 25%, transparent);
+}
+
+.bar-cassette__reel {
+  fill: color-mix(in oklab, var(--room-wood-deep) 70%, var(--room-slate));
+}
+
+.bar-cassette__hub {
+  fill: var(--room-paper);
+}
+
+.bar-cassette__tape {
+  fill: var(--room-wood-deep);
+}
+
+.bar-cassette__foot {
+  justify-self: center;
+  width: 60%;
+  height: 0.7rem;
+  border-radius: 0.3rem 0.3rem 0 0;
+  background: color-mix(in oklab, var(--room-paper) 8%, var(--room-slate));
+}

@@ -1,0 +1,39 @@
+.bar-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 1.75rem;
+  padding: 0 0.8rem;
+  border: 1px solid var(--room-line);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--room-ink-soft);
+  font: 400 var(--type-sm) / 1 var(--font-sans);
+  white-space: nowrap;
+}
+
+.bar-pill--button {
+  min-height: var(--target-min);
+  padding: 0 var(--space-2);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-quick) var(--ease-settle),
+    border-color var(--dur-quick) var(--ease-settle),
+    color var(--dur-quick) var(--ease-settle);
+}
+
+.bar-pill--button:hover {
+  border-color: var(--room-ink-soft);
+  color: var(--room-ink);
+}
+
+.bar-pill--button[aria-pressed='true'] {
+  border-color: var(--room-ink);
+  background: var(--room-ink);
+  color: var(--room-bg);
+}
+
+.bar-pill--button:focus-visible {
+  outline: 2px solid var(--room-focus);
+  outline-offset: 2px;
+}

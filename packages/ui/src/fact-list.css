@@ -1,0 +1,20 @@
+.bar-facts {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  font: 400 var(--type-sm) / 1.4 var(--font-mono);
+}
+
+.bar-facts__row {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  gap: var(--space-2);
+}
+
+.bar-facts dt {
+  color: var(--room-ink-soft);
+}
+
+.bar-facts dd {
+  margin: 0;
+}

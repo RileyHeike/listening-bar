@@ -1,0 +1,100 @@
+.bar-sleeve {
+  --sleeve-lift: 0;
+
+  min-width: 0;
+}
+
+.bar-sleeve__body {
+  display: grid;
+  gap: var(--space-2);
+  color: inherit;
+  text-decoration: none;
+}
+
+.bar-sleeve__cover {
+  position: relative;
+  display: block;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--room-surface);
+  box-shadow:
+    0 1px 0 color-mix(in oklab, var(--room-ink) 12%, transparent) inset,
+    0 0.6rem 1.2rem -0.6rem color-mix(in oklab, var(--room-bg) 70%, transparent);
+  transform: translateY(calc(var(--sleeve-lift) * -0.75rem));
+  transition:
+    transform var(--dur-move) var(--ease-settle),
+    box-shadow var(--dur-move) var(--ease-settle);
+}
+
+.bar-sleeve__cover > img,
+.bar-sleeve__cover > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Paper sheen along the spine edge. */
+.bar-sleeve__cover::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--room-paper) 18%, transparent) 0,
+    transparent 6%
+  );
+  content: '';
+  pointer-events: none;
+}
+
+.bar-sleeve__body:is(a):hover,
+.bar-sleeve__body:is(a):focus-visible {
+  --sleeve-lift: 1;
+}
+
+.bar-sleeve__body:is(a):hover .bar-sleeve__cover,
+.bar-sleeve__body:is(a):focus-visible .bar-sleeve__cover {
+  box-shadow:
+    0 1px 0 color-mix(in oklab, var(--room-ink) 12%, transparent) inset,
+    0 1.4rem 1.6rem -0.8rem color-mix(in oklab, var(--room-bg) 80%, transparent);
+}
+
+.bar-sleeve__body:is(a):focus-visible {
+  outline: none;
+}
+
+.bar-sleeve__body:is(a):focus-visible .bar-sleeve__cover {
+  outline: 2px solid var(--room-focus);
+  outline-offset: 4px;
+}
+
+.bar-sleeve__text {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.bar-sleeve__kicker {
+  color: var(--room-ink-soft);
+  font: 400 0.75rem / 1.2 var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
+.bar-sleeve__name {
+  font: 500 var(--type-md) / var(--leading-tight) var(--font-display);
+}
+
+.bar-sleeve__blurb {
+  color: var(--room-ink-soft);
+  font: 400 var(--type-sm) / 1.45 var(--font-sans);
+}
+
+.bar-sleeve[data-faded] .bar-sleeve__cover {
+  opacity: 0.55;
+  filter: grayscale(0.85) sepia(0.15);
+}
+
+:root[data-motion='off'] .bar-sleeve__cover {
+  transform: none;
+  transition: none;
+}
