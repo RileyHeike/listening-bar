@@ -1,0 +1,78 @@
+---
+/**
+ * Base layout: <html> modifiers, fonts, tokens, the pre-paint boot script,
+ * the client router, layout slots (header, footer, overlay), and the room
+ * runtime (started once; persists across navigations).
+ */
+import '@fontsource/caveat/600.css';
+import '@fontsource/dm-mono/400.css';
+import '@fontsource/jost/400.css';
+import '@fontsource/jost/500.css';
+import '@fontsource/shippori-mincho/500.css';
+import '@fontsource/shippori-mincho/700.css';
+import '@bar/tokens/tokens.css';
+import '../styles/global.css';
+import type { PageDefinition } from '@bar/core';
+import { bootScript } from '@bar/room/boot';
+import { ClientRouter } from 'astro:transitions';
+import SlotOutlet from '../components/SlotOutlet.astro';
+import { domainsForPage } from '../lib/derive.ts';
+import layout from '../page-defs/layout.ts';
+import { site, stations } from '../site.ts';
+
+interface Props {
+  /** A defined page, or a minimal stand-in for pages without slots (drafts, 404). */
+  page: Pick<PageDefinition, 'id' | 'title' | 'tone'>;
+  /** Overrides the page definition's title (e.g. a project name). */
+  title?: string;
+  description?: string;
+}
+
+const {
+  page,
+  title = page.title,
+  description = `${site.name}, a listening bar on the internet.`,
+} = Astro.props;
+const domains = domainsForPage(stations, page.id);
+const usesRuntimeConfig = !import.meta.env.BAR_FIXTURES && !import.meta.env.DEV;
+---
+
+<!doctype html>
+<html
+  lang="en"
+  data-tone={page.tone}
+  data-phase={site.defaultPhase}
+  data-lights="dim"
+  data-side="A"
+  data-motion="on"
+>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title === site.name ? title : `${title} · ${site.name}`}</title>
+    <meta name="description" content={description} />
+    <meta name="bar:domains" content={domains.join(' ')} />
+    {usesRuntimeConfig && (
+      <link rel="preload" href="/config.json" as="fetch" crossorigin="anonymous" />
+    )}
+    <script
+      is:inline
+      set:html={bootScript({ timeZone: site.timeZone, defaultPhase: site.defaultPhase })}
+    />
+    <ClientRouter />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">
+      Skip to content
+    </a>
+    <SlotOutlet page={layout} name="header" />
+    <main id="main">
+      <slot />
+    </main>
+    <SlotOutlet page={layout} name="footer" />
+    <SlotOutlet page={layout} name="overlay" />
+    <script>
+      import '../scripts/room.ts';
+    </script>
+  </body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "types": ["astro/client", "node"]
+  },
+  "include": [".astro/types.d.ts", "src", "test", "*.ts", "../../tools/types/astro-modules.d.ts"],
+  "exclude": ["dist"]
+}

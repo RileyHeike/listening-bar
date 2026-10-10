@@ -1,0 +1,26 @@
+---
+import { getProject, getProjects } from '@bar/content';
+import type { GetStaticPaths } from 'astro';
+import SlotOutlet from '../../components/SlotOutlet.astro';
+import Base from '../../layouts/Base.astro';
+import page from '../../page-defs/project.ts';
+
+export const getStaticPaths = (() =>
+  getProjects().map((project) => ({ params: { slug: project.slug } }))) satisfies GetStaticPaths;
+
+const { slug } = Astro.params;
+const project = getProject(slug);
+if (!project) throw new Error(`No project "${slug}".`);
+---
+
+<Base page={page} title={project.title} description={project.summary}>
+  <div class="page project">
+    <SlotOutlet page={page} name="album" />
+  </div>
+</Base>
+
+<style>
+  .project {
+    padding-block: var(--space-4) var(--space-6);
+  }
+</style>

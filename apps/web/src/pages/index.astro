@@ -1,0 +1,48 @@
+---
+import SlotOutlet from '../components/SlotOutlet.astro';
+import Base from '../layouts/Base.astro';
+import page from '../page-defs/room.ts';
+import { site } from '../site.ts';
+---
+
+<Base page={{ ...page, title: site.name }}>
+  <h1 class="visually-hidden">{site.name}, a listening bar</h1>
+  <SlotOutlet page={page} name="entrance" class="room__entrance" />
+  <div class="page room">
+    <SlotOutlet page={page} name="counter" class="room__counter" />
+    <SlotOutlet page={page} name="window" class="room__window" />
+    <SlotOutlet page={page} name="hifi" class="room__hifi" />
+    <SlotOutlet page={page} name="menu" class="room__menu" />
+    <SlotOutlet page={page} name="wall" class="room__wall" />
+  </div>
+</Base>
+
+<style>
+  .room {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5) var(--space-4);
+    padding-block: var(--space-4) var(--space-6);
+  }
+
+  .room > :global(.slot) {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+
+  @media (width >= 60rem) {
+    .room {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+    }
+
+    .room > :global(.room__counter),
+    .room > :global(.room__hifi) {
+      grid-column: 1 / 8;
+    }
+
+    .room > :global(.room__window),
+    .room > :global(.room__menu) {
+      grid-column: 8 / -1;
+    }
+  }
+</style>

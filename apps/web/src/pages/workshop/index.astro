@@ -1,0 +1,47 @@
+---
+import SlotOutlet from '../../components/SlotOutlet.astro';
+import Base from '../../layouts/Base.astro';
+import page from '../../page-defs/workshop.ts';
+---
+
+<Base page={page}>
+  <div class="page workshop">
+    <SlotOutlet page={page} name="header">
+      <header class="workshop__header">
+        <p class="workshop__kicker">Workshop</p>
+        <h1>Things on the bench</h1>
+        <p class="workshop__lede">[A line about what you build, and why you keep building.]</p>
+      </header>
+    </SlotOutlet>
+    <SlotOutlet page={page} name="featured" />
+    <SlotOutlet page={page} name="shelf" />
+  </div>
+</Base>
+
+<style>
+  .workshop {
+    display: grid;
+    gap: var(--space-5);
+    padding-block: var(--space-5) var(--space-6);
+  }
+
+  .workshop__header {
+    display: grid;
+    gap: var(--space-2);
+    max-width: var(--measure);
+  }
+
+  .workshop__kicker {
+    color: var(--room-ink-soft);
+    font: 400 var(--type-sm) / 1 var(--font-mono);
+    letter-spacing: 0.06em;
+  }
+
+  .workshop__header h1 {
+    font-size: var(--type-xl);
+  }
+
+  .workshop__lede {
+    color: var(--room-ink-soft);
+  }
+</style>

@@ -1,0 +1,41 @@
+{
+  "name": "@bar/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "dev:site": "BAR_API=off astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "typecheck": "astro check",
+    "lint": "eslint --max-warnings=0 . && stylelint \"src/**/*.{css,astro}\"",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@astrojs/react": "7.0.1",
+    "@bar/content": "workspace:*",
+    "@bar/core": "workspace:*",
+    "@bar/room": "workspace:*",
+    "@bar/tokens": "workspace:*",
+    "@bar/ui": "workspace:*",
+    "@fontsource/caveat": "5.3.0",
+    "@fontsource/dm-mono": "5.3.0",
+    "@fontsource/jost": "5.3.0",
+    "@fontsource/shippori-mincho": "5.3.0",
+    "astro": "7.3.8",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "@bar/fixtures": "workspace:*",
+    "@playwright/test": "1.64.0",
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "typescript": "6.0.3",
+    "vite": "8.3.4",
+    "vitest": "5.0.3"
+  }
+}

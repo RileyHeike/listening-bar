@@ -1,0 +1,44 @@
+---
+/**
+ * Renders the stations targeting one slot, in `order`. Each station entry
+ * gets the StationContext. When no station fills the slot, the outlet's own
+ * children render instead (or nothing).
+ */
+import type { LayoutDefinition, PageDefinition, StationContext } from '@bar/core';
+import { stationsForTarget } from '../lib/derive.ts';
+import { site, stations } from '../site.ts';
+
+interface Props {
+  page: PageDefinition | LayoutDefinition;
+  name: string;
+  class?: string;
+}
+
+const { page, name, class: className } = Astro.props;
+if (!page.slots.includes(name)) {
+  throw new Error(
+    `<SlotOutlet name="${name}"> is not a slot of "${page.id}" (slots: ${page.slots.join(', ')}).`,
+  );
+}
+const target = `${page.id}:${name}`;
+const filling = stationsForTarget(stations, target);
+const context: StationContext = {
+  pageId: page.id,
+  path: Astro.url.pathname,
+  params: Astro.params,
+  site,
+};
+const hasFallback = Astro.slots.has('default');
+---
+
+{filling.length > 0 ? (
+  <div class:list={['slot', className]} data-slot={target}>
+    {filling.map(({ Entry }) => (
+      <Entry {...context} />
+    ))}
+  </div>
+) : hasFallback ? (
+  <div class:list={['slot', className]} data-slot={target}>
+    <slot />
+  </div>
+) : null}

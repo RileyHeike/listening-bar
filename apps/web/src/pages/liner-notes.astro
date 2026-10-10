@@ -1,0 +1,21 @@
+---
+import SlotOutlet from '../components/SlotOutlet.astro';
+import Base from '../layouts/Base.astro';
+import page from '../page-defs/liner-notes.ts';
+---
+
+<Base page={page}>
+  <div class="page liner-notes">
+    <SlotOutlet page={page} name="intro" />
+    <SlotOutlet page={page} name="discography" />
+    <SlotOutlet page={page} name="contact" />
+  </div>
+</Base>
+
+<style>
+  .liner-notes {
+    display: grid;
+    gap: var(--space-6);
+    padding-block: var(--space-5) var(--space-6);
+  }
+</style>

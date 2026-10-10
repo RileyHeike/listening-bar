@@ -1,0 +1,93 @@
+---
+/**
+ * Automatic "being built" pages for draft stations that own a route.
+ * Drafts exist only in local, sandbox and preview builds.
+ */
+import type { StationManifest } from '@bar/core';
+import { sleeveTransitionName } from '@bar/core';
+import { Button } from '@bar/ui';
+import type { GetStaticPaths } from 'astro';
+import { draftPages } from '../lib/derive.ts';
+import Base from '../layouts/Base.astro';
+import { stations } from '../site.ts';
+
+export const getStaticPaths = (() =>
+  draftPages(stations).map(({ manifest, sleeveUrl }) => ({
+    params: { draft: (manifest.route ?? '/').slice(1) },
+    props: { manifest, sleeveUrl },
+  }))) satisfies GetStaticPaths;
+
+interface Props {
+  manifest: StationManifest;
+  sleeveUrl: string | undefined;
+}
+
+const { manifest, sleeveUrl } = Astro.props;
+---
+
+<Base page={{ id: 'draft', title: manifest.name, tone: 'room' }} description={manifest.blurb}>
+  <div class="page draft">
+    {sleeveUrl && (
+      <img
+        class="draft__sleeve"
+        src={sleeveUrl}
+        alt=""
+        width="600"
+        height="600"
+        style={`view-transition-name: ${sleeveTransitionName(manifest.id)}`}
+      />
+    )}
+    <div class="draft__text">
+      <p class="draft__kicker">Still being pressed</p>
+      <h1>{manifest.name}</h1>
+      {manifest.blurb && <p class="draft__blurb">{manifest.blurb}</p>}
+      <p>This record is still in the studio. Check back soon.</p>
+      <Button href="/" variant="outline">
+        Back to the room
+      </Button>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .draft {
+    display: grid;
+    gap: var(--space-4);
+    align-items: center;
+    padding-block: var(--space-5) var(--space-6);
+  }
+
+  @media (width >= 48rem) {
+    .draft {
+      grid-template-columns: minmax(0, 22rem) minmax(0, 1fr);
+    }
+  }
+
+  .draft__sleeve {
+    width: 100%;
+    height: auto;
+    border-radius: 2px;
+    box-shadow: 0 1.4rem 2rem -1rem color-mix(in oklab, var(--room-bg) 80%, transparent);
+  }
+
+  .draft__text {
+    display: grid;
+    gap: var(--space-2);
+    justify-items: start;
+    max-width: var(--measure);
+  }
+
+  .draft__kicker {
+    color: var(--room-glow);
+    font: 400 var(--type-sm) / 1 var(--font-mono);
+  }
+
+  .draft__text h1 {
+    font-size: var(--type-xl);
+  }
+
+  .draft__blurb {
+    color: var(--room-ink-soft);
+    font-size: var(--type-md);
+  }
+</style>

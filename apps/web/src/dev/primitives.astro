@@ -1,0 +1,305 @@
+---
+/**
+ * Dev-only fixture page (injected by the dev-tools integration; never built).
+ * Without a query it shows a matrix of frames, one per lighting mode. With
+ * ?phase=&tone=&lights= it renders every @bar/ui primitive in that mode.
+ */
+import '@fontsource/caveat/600.css';
+import '@fontsource/dm-mono/400.css';
+import '@fontsource/jost/400.css';
+import '@fontsource/jost/500.css';
+import '@fontsource/shippori-mincho/500.css';
+import '@bar/tokens/tokens.css';
+import '../styles/global.css';
+import { PHASES } from '@bar/core';
+import {
+  BulbIcon,
+  Button,
+  Cassette,
+  Crest,
+  DOT_STATUSES,
+  Pill,
+  PillButton,
+  Sleeve,
+  SleeveArt,
+  StatusDot,
+} from '@bar/ui';
+
+const modes = [
+  ...PHASES.map((p) => ({ label: `Room · ${p}`, phase: p, tone: 'room', lights: 'dim' })),
+  { label: 'Paper tone', phase: 'evening', tone: 'paper', lights: 'dim' },
+  { label: 'Lights up', phase: 'evening', tone: 'room', lights: 'up' },
+  { label: 'Lights up · paper', phase: 'evening', tone: 'paper', lights: 'up' },
+];
+const roles = [
+  'room-bg',
+  'room-surface',
+  'room-line',
+  'room-ink',
+  'room-ink-soft',
+  'room-glow',
+  'window-sky',
+  'signature',
+  'room-wood',
+  'room-wood-deep',
+  'room-wood-light',
+  'room-metal',
+  'room-paper',
+  'room-alert',
+  'room-plant',
+  'room-slate',
+  'room-chalk',
+];
+---
+
+<!doctype html>
+<html lang="en" data-phase="evening" data-tone="room" data-lights="dim" data-motion="on">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Primitives · dev</title>
+    <script is:inline>
+      // Prerendered page: the frame's mode comes from the query string.
+      (function () {
+        var q = new URLSearchParams(location.search);
+        var d = document.documentElement;
+        if (!q.has('phase')) return;
+        d.dataset.framed = '';
+        d.dataset.phase = q.get('phase');
+        d.dataset.tone = q.get('tone') || 'room';
+        d.dataset.lights = q.get('lights') || 'dim';
+        d.dataset.motion = d.dataset.lights === 'up' ? 'off' : 'on';
+      })();
+    </script>
+  </head>
+  <body>
+    {
+      <main class="fixture">
+        <section>
+          <h2>Type</h2>
+          <p class="display">Pull up a stool. I'm [Your Name].</p>
+          <p>Body copy in Jost: a listening bar on the internet, with records and plants.</p>
+          <p class="mono">BAR-006 · 33⅓ RPM · Side A</p>
+          <p class="chalk">Tonight's menu</p>
+        </section>
+        <section>
+          <h2>Room roles</h2>
+          <div class="swatches">
+            {roles.map((role) => (
+              <div class="swatch" style={`--swatch: var(--${role})`}>
+                <span>{role}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+        <section>
+          <h2>Button</h2>
+          <div class="row">
+            <Button>Pull up a stool</Button>
+            <Button variant="outline">See the workshop</Button>
+            <Button variant="quiet">
+              <BulbIcon slot="icon" />
+              Lights up
+            </Button>
+            <Button href="#" variant="outline">
+              A link
+            </Button>
+          </div>
+        </section>
+        <section>
+          <h2>Pill, PillButton, StatusDot</h2>
+          <div class="row">
+            <Pill dot="open">Open</Pill>
+            <Pill dot="closed">Closed</Pill>
+            <Pill>Happily employed, open to a good conversation</Pill>
+          </div>
+          <div class="row">
+            <PillButton pressed dot="demo">
+              Demo tapes
+            </PillButton>
+            <PillButton pressed={false} dot="studio">
+              In the studio
+            </PillButton>
+            <PillButton pressed={false} dot="pressed">
+              Pressed
+            </PillButton>
+            <PillButton pressed={false} dot="out">
+              Out of print
+            </PillButton>
+          </div>
+          <div class="row">
+            {DOT_STATUSES.map((status) => (
+              <span class="dot-label">
+                <StatusDot status={status} /> {status}
+              </span>
+            ))}
+          </div>
+        </section>
+        <section>
+          <h2>Sleeve</h2>
+          <div class="sleeves">
+            <Sleeve
+              name="Workshop"
+              blurb="Things on the bench"
+              href="#"
+              transitionName="fixture-a"
+            />
+            <Sleeve name="Liner Notes" blurb="The professional side" href="#" kicker="BAR-002" />
+            <Sleeve name="Retired project" blurb="Out of print" faded />
+            <Sleeve name="Crate" blurb="Records worth digging for" seed="crate" href="#" />
+          </div>
+        </section>
+        <section>
+          <h2>SleeveArt</h2>
+          <div class="arts">
+            {['a', 'house-band', 'tours', 'notebook', 'crate', 'workshop', 'z', 'liner'].map(
+              (seed) => (
+                <SleeveArt seed={seed} />
+              ),
+            )}
+          </div>
+        </section>
+        <section>
+          <h2>Cassette and Crest</h2>
+          <div class="row">
+            <div class="cassette">
+              <Cassette label="[Rough idea]" sublabel="Demo · 2026" />
+            </div>
+            <Crest size="4rem" label="Crest" />
+            <Crest size="2rem" />
+          </div>
+        </section>
+      </main>
+    }
+    {
+      <main class="matrix">
+        <h1>@bar/ui primitives</h1>
+        <div class="frames">
+          {modes.map((mode) => (
+            <figure>
+              <figcaption>{mode.label}</figcaption>
+              <iframe
+                title={mode.label}
+                src={`/dev/primitives?phase=${mode.phase}&tone=${mode.tone}&lights=${mode.lights}`}
+                loading="lazy"
+              />
+            </figure>
+          ))}
+        </div>
+      </main>
+    }
+  </body>
+</html>
+
+<style>
+  :root:not([data-framed]) .fixture,
+  :root[data-framed] .matrix {
+    display: none;
+  }
+
+  .matrix {
+    padding: var(--space-3);
+  }
+
+  .frames {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(32rem, 1fr));
+    gap: var(--space-3);
+    margin-top: var(--space-3);
+  }
+
+  figure {
+    margin: 0;
+  }
+
+  figcaption {
+    margin-bottom: var(--space-1);
+    font-family: var(--font-mono);
+  }
+
+  iframe {
+    width: 100%;
+    height: 70rem;
+    border: 1px solid var(--room-line);
+  }
+
+  .fixture {
+    display: grid;
+    gap: var(--space-4);
+    padding: var(--space-3);
+  }
+
+  section {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  h2 {
+    color: var(--room-ink-soft);
+    font: 400 var(--type-sm) / 1 var(--font-mono);
+  }
+
+  .display {
+    font: 500 var(--type-xl) / var(--leading-tight) var(--font-display);
+  }
+
+  .mono {
+    font-family: var(--font-mono);
+  }
+
+  .chalk {
+    font: 600 var(--type-lg) / 1 var(--font-chalk);
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    align-items: center;
+  }
+
+  .dot-label {
+    display: inline-flex;
+    gap: 0.4rem;
+    align-items: center;
+    font-size: var(--type-sm);
+  }
+
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+    gap: var(--space-1);
+  }
+
+  .swatch {
+    display: grid;
+    align-items: end;
+    height: 3.5rem;
+    padding: 0.3rem;
+    border: 1px solid var(--room-line);
+    background: var(--swatch);
+    font: 400 0.65rem / 1 var(--font-mono);
+  }
+
+  .swatch span {
+    padding: 0.15rem 0.25rem;
+    background: var(--room-bg);
+    justify-self: start;
+  }
+
+  .sleeves {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+
+  .arts {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: var(--space-1);
+  }
+
+  .cassette {
+    width: 14rem;
+  }
+</style>
