@@ -1,0 +1,22 @@
+{
+  "name": "@bar/fixtures",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Zod-validated fixture data: event payloads and the fixture snapshot.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint --max-warnings=0 .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@bar/core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3",
+    "vitest": "5.0.3"
+  }
+}
