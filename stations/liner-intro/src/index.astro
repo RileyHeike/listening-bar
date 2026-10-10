@@ -1,0 +1,39 @@
+---
+import { getProfile } from '@bar/content';
+import type { StationContext } from '@bar/core';
+import { sleeveTransitionName } from '@bar/core';
+import { Pill } from '@bar/ui';
+import Meishi from './Meishi.tsx';
+import './liner-intro.css';
+
+export type Props = StationContext;
+const profile = getProfile();
+---
+
+<section class="liner-intro" aria-labelledby="liner-intro-title">
+  <div class="liner-intro__text">
+    <p class="liner-intro__kicker">Liner Notes</p>
+    <h1 id="liner-intro-title" class="liner-intro__name">
+      {profile.name}
+    </h1>
+    <p class="liner-intro__role">
+      {profile.role} · {profile.location}
+    </p>
+    <p class="liner-intro__summary">{profile.summary}</p>
+    <div>
+      <Pill dot="open">{profile.availability}</Pill>
+    </div>
+  </div>
+  <div
+    class="liner-intro__card"
+    style={`view-transition-name: ${sleeveTransitionName('liner-intro')}`}
+  >
+    <Meishi
+      client:visible
+      name={profile.name}
+      title={profile.meishi.title}
+      lines={profile.meishi.lines}
+      back={profile.meishi.back}
+    />
+  </div>
+</section>
