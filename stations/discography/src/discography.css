@@ -1,0 +1,114 @@
+.discography {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.discography__title {
+  font-size: var(--type-xl);
+}
+
+.discography__eras {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.era {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr);
+  gap: var(--space-2) var(--space-3);
+  padding-block: var(--space-3);
+  border-top: 1px solid var(--room-line);
+}
+
+@media (width >= 56rem) {
+  .era {
+    grid-template-columns: 6rem minmax(0, 1.2fr) minmax(0, 1fr);
+  }
+}
+
+.era__sleeve {
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+.era__sleeve > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.era__notes {
+  display: grid;
+  gap: 0.3rem;
+  align-content: start;
+}
+
+.era__years,
+.era__tracks-title,
+.skills__title {
+  color: var(--room-ink-soft);
+  font: 400 var(--type-sm) / 1.3 var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
+.era__title {
+  font-size: var(--type-lg);
+}
+
+.era__org {
+  font-weight: 500;
+}
+
+.era__summary {
+  max-width: var(--measure);
+  color: var(--room-ink-soft);
+}
+
+.era__tracks {
+  grid-column: 2;
+}
+
+@media (width >= 56rem) {
+  .era__tracks {
+    grid-column: 3;
+  }
+}
+
+.era__tracks ol {
+  display: grid;
+  gap: 0.3rem;
+  margin: var(--space-1) 0 0;
+  padding-left: 1.4rem;
+}
+
+.era__tracks li::marker {
+  color: var(--room-glow);
+  font-family: var(--font-mono);
+}
+
+.discography__skills {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--room-line);
+}
+
+.skills__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: var(--space-1) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.skills__list li {
+  padding: 0.25rem 0.7rem;
+  border: 1px solid var(--room-line);
+  border-radius: var(--radius-pill);
+  font-size: var(--type-sm);
+}

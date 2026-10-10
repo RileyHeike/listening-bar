@@ -1,0 +1,60 @@
+---
+/** Roles as album eras, newest first, each with its standout tracks; then the skills. */
+import { getProfile, getRoles } from '@bar/content';
+import type { StationContext } from '@bar/core';
+import { SleeveArt } from '@bar/ui';
+import './discography.css';
+
+export type Props = StationContext;
+const roles = getRoles();
+const { skills } = getProfile();
+const year = (yearMonth: string) => yearMonth.slice(0, 4);
+const groups = [
+  { title: 'Instruments', items: skills.instruments },
+  { title: 'Studio gear', items: skills.studioGear },
+  { title: 'Genres', items: skills.genres },
+];
+---
+
+<section class="discography" aria-labelledby="discography-title">
+  <h2 id="discography-title" class="discography__title">
+    Discography
+  </h2>
+  <ol class="discography__eras">
+    {roles.map((role) => (
+      <li class="era">
+        <div class="era__sleeve">
+          <SleeveArt seed={role.slug} />
+        </div>
+        <div class="era__notes">
+          <p class="era__years">
+            {year(role.start)}–{role.end ? year(role.end) : 'now'}
+          </p>
+          <h3 class="era__title">{role.title}</h3>
+          <p class="era__org">{role.org}</p>
+          <p class="era__summary">{role.summary}</p>
+        </div>
+        <div class="era__tracks">
+          <p class="era__tracks-title">Standout tracks</p>
+          <ol>
+            {role.standoutTracks.map((track) => (
+              <li>{track}</li>
+            ))}
+          </ol>
+        </div>
+      </li>
+    ))}
+  </ol>
+  <div class="discography__skills">
+    {groups.map((group) => (
+      <div class="skills">
+        <h3 class="skills__title">{group.title}</h3>
+        <ul class="skills__list">
+          {group.items.map((item) => (
+            <li>{item}</li>
+          ))}
+        </ul>
+      </div>
+    ))}
+  </div>
+</section>
