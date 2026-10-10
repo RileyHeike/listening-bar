@@ -1,0 +1,11 @@
+---
+import type { StationContext } from '@bar/core';
+import Noren from './Noren.tsx';
+import './noren.css';
+
+export type Props = StationContext;
+---
+
+<div class="noren-doorway">
+  <Noren client:load />
+</div>

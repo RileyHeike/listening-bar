@@ -1,0 +1,121 @@
+.noren-doorway {
+  width: min(100% - 2 * var(--space-3), var(--container));
+  margin-inline: auto;
+}
+
+.noren {
+  --noren-height: clamp(7.5rem, 16vw, 12rem);
+  --noren-gap: 0.4rem;
+
+  position: relative;
+  height: calc(var(--noren-height) + 1rem);
+  padding-inline: 3%;
+}
+
+.noren__rod {
+  position: relative;
+  z-index: 1;
+  height: 0.55rem;
+  margin-inline: -3%;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(var(--room-metal), var(--room-wood-light));
+  box-shadow: 0 0.3rem 0.6rem -0.2rem color-mix(in oklab, var(--room-bg) 80%, transparent);
+}
+
+.noren__panels {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--noren-gap);
+  height: var(--noren-height);
+  margin-top: -0.2rem;
+}
+
+.noren__panel {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0 0 2px 2px;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--room-bg) 25%, transparent) 0,
+      transparent 18%
+    ),
+    var(--signature);
+  box-shadow: inset 0 -0.35rem 0 color-mix(in oklab, var(--room-bg) 25%, transparent);
+  transform-origin: 50% 0;
+}
+
+/* Half of the crest on each center panel, meeting across the gap. */
+.noren__crest {
+  position: absolute;
+  top: 50%;
+  width: calc(var(--noren-height) * 0.5);
+  aspect-ratio: 1;
+  color: var(--room-paper);
+  translate: 0 -50%;
+}
+
+.noren__crest[data-half='left'] {
+  right: calc(var(--noren-height) * -0.25 - var(--noren-gap) / 2);
+}
+
+.noren__crest[data-half='right'] {
+  left: calc(var(--noren-height) * -0.25 - var(--noren-gap) / 2);
+}
+
+.noren__crest .bar-crest {
+  --crest-vein: var(--signature);
+
+  display: block;
+}
+
+/* Entrance: the panels sway and settle closed. */
+.noren[data-entering] .noren__panel {
+  animation: noren-settle 2.4s var(--ease-settle) both;
+}
+
+.noren[data-entering] .noren__panel[data-panel='0'] {
+  --sway: -1;
+
+  animation-delay: 60ms;
+}
+
+.noren[data-entering] .noren__panel[data-panel='1'] {
+  --sway: -1.6;
+}
+
+.noren[data-entering] .noren__panel[data-panel='2'] {
+  --sway: 1.6;
+}
+
+.noren[data-entering] .noren__panel[data-panel='3'] {
+  --sway: 1;
+
+  animation-delay: 60ms;
+}
+
+@keyframes noren-settle {
+  0% {
+    transform: rotate(0) skewX(0);
+  }
+
+  14% {
+    transform: rotate(calc(var(--sway) * 7deg)) skewX(calc(var(--sway) * -3deg));
+  }
+
+  38% {
+    transform: rotate(calc(var(--sway) * -3.5deg)) skewX(calc(var(--sway) * 1.5deg));
+  }
+
+  62% {
+    transform: rotate(calc(var(--sway) * 1.5deg));
+  }
+
+  82% {
+    transform: rotate(calc(var(--sway) * -0.5deg));
+  }
+
+  100% {
+    transform: rotate(0);
+  }
+}
