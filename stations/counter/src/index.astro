@@ -1,0 +1,33 @@
+---
+import { getProfile } from '@bar/content';
+import type { StationContext } from '@bar/core';
+import Counter from './Counter.tsx';
+import './counter.css';
+
+export type Props = StationContext;
+const profile = getProfile();
+const sides = {
+  A: {
+    kicker: 'Side A · after hours',
+    headline: `Pull up a stool. I'm ${profile.name}.`,
+    body: profile.intro,
+    actions: [
+      { label: 'See the workshop', href: '/workshop' },
+      { label: 'Read the liner notes', href: '/liner-notes' },
+    ],
+  },
+  B: {
+    kicker: 'Side B · the day job',
+    headline: `${profile.role}, in ${profile.location}.`,
+    body: profile.summary,
+    actions: [
+      { label: 'Read the liner notes', href: '/liner-notes' },
+      { label: 'Get in touch', href: '/liner-notes#contact' },
+    ],
+  },
+};
+---
+
+<section class="counter" aria-label="The counter">
+  <Counter client:visible sides={sides} />
+</section>
