@@ -1,0 +1,14 @@
+---
+import type { StationContext } from '@bar/core';
+import Window from './Window.tsx';
+import './window.css';
+
+export type Props = StationContext;
+---
+
+<section class="window-station" aria-labelledby="window-title">
+  <h2 id="window-title" class="visually-hidden">
+    The window
+  </h2>
+  <Window client:visible />
+</section>

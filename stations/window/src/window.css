@@ -1,0 +1,166 @@
+.window {
+  display: grid;
+  gap: 0;
+  margin: 0;
+}
+
+.window__frame {
+  padding: 0.7rem;
+  border-radius: 3px 3px 0 0;
+  background: var(--room-wood-deep);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--room-paper) 8%, transparent);
+}
+
+.window__glass {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 5 / 4;
+  border-radius: 1px;
+  background: var(--window-sky);
+  contain: paint;
+}
+
+.window__sky {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    var(--window-sky) 0%,
+    color-mix(in oklab, var(--window-sky) 75%, var(--room-glow)) 100%
+  );
+}
+
+/* A soft light in the sky: sun or moon, tinted by the phase. */
+.window__glow {
+  position: absolute;
+  top: 16%;
+  right: 20%;
+  width: 22%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in oklab, var(--room-glow) 70%, var(--room-paper)) 0 38%,
+    transparent 70%
+  );
+  opacity: 0.75;
+}
+
+.window[data-condition='rain'] .window__glow,
+.window[data-condition='storm'] .window__glow,
+.window[data-condition='fog'] .window__glow,
+.window[data-condition='cloudy'] .window__glow {
+  opacity: 0.2;
+}
+
+.window__rain {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity var(--dur-move) var(--ease-settle);
+}
+
+.window__rain[data-raining] {
+  opacity: 1;
+}
+
+/* Rain moves by transform only: a double-height layer sliding down. */
+.window__streaks {
+  position: absolute;
+  inset: -100% -10% 0;
+  background-image: repeating-linear-gradient(
+    100deg,
+    transparent 0 22px,
+    color-mix(in oklab, var(--room-paper) 38%, transparent) 22px 23px,
+    transparent 23px 41px
+  );
+  background-size: 100% 46px;
+  transform: translateY(0);
+}
+
+.window__streaks--far {
+  opacity: 0.5;
+  background-size: 100% 31px;
+}
+
+.window__rain[data-animate] .window__streaks {
+  animation: window-rain 0.9s linear infinite;
+}
+
+.window__rain[data-animate] .window__streaks--far {
+  animation-duration: 1.4s;
+}
+
+@keyframes window-rain {
+  from {
+    transform: translate(0, 0);
+  }
+
+  to {
+    transform: translate(-4%, 50%);
+  }
+}
+
+/* Kumiko lattice over the glass, with a paper panel along the bottom. */
+.window__shoji {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(
+      0deg,
+      color-mix(in oklab, var(--room-paper) 22%, transparent) 0 22%,
+      transparent 22%
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 calc(25% - 3px),
+      var(--room-wood-light) calc(25% - 3px) 25%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 calc(100% / 6 - 3px),
+      var(--room-wood-light) calc(100% / 6 - 3px) calc(100% / 6)
+    );
+  box-shadow: inset 0 0 0 3px var(--room-wood-light);
+}
+
+.window__sill {
+  padding-inline: 0.4rem;
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(180deg, transparent 0 78%, var(--room-wood) 78%);
+}
+
+.window__plants {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 32 / 9;
+}
+
+.window__leaf {
+  fill: var(--room-plant);
+}
+
+.window__leaf--deep {
+  fill: color-mix(in oklab, var(--room-plant) 70%, var(--room-slate));
+}
+
+.window__stem {
+  fill: none;
+  stroke: color-mix(in oklab, var(--room-plant) 70%, var(--room-slate));
+  stroke-width: 2;
+}
+
+.window__pot--paper {
+  fill: var(--room-paper);
+}
+
+.window__pot--wood {
+  fill: var(--room-wood-light);
+}
+
+.window__status {
+  margin-top: var(--space-1);
+  color: var(--room-ink-soft);
+  font: 400 var(--type-sm) / 1.6 var(--font-mono);
+}
