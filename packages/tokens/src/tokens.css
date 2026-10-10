@@ -1,0 +1,229 @@
+/*
+ * Design tokens, in three layers (docs/design-system.md):
+ *   1. Materials: raw values. Only this file uses them.
+ *   2. Room roles: the only color tokens stations and @bar/ui use.
+ *   3. Modifiers on <html>: data-phase, data-tone, data-lights.
+ * Motion, type, and space values are mirrored in tokens.ts; a test keeps
+ * the two in sync.
+ */
+
+/* Register color roles so phase changes can transition smoothly. */
+@property --room-bg {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #1e140e;
+}
+
+@property --room-surface {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #2a1c13;
+}
+
+@property --room-line {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #4a3a2c;
+}
+
+@property --room-ink {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #f2e8d5;
+}
+
+@property --room-ink-soft {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #cdbfa6;
+}
+
+@property --room-glow {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #c9a15a;
+}
+
+@property --window-sky {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #28343b;
+}
+
+@property --signature {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #2f4a32;
+}
+
+:root {
+  /* ---- 1. Materials -------------------------------------------------- */
+  --walnut-900: #1e140e;
+  --walnut-800: #2a1c13;
+  --walnut-700: #3a2719;
+  --walnut-500: #6b4426;
+  --teak: #8a5a34;
+  --brass: #c9a15a;
+  --persimmon: #c4652f;
+  --washi: #efe5d0;
+  --paper: #f6f0e4;
+  --cream: #f2e8d5;
+  --cream-soft: #cdbfa6;
+  --forest: #2f4a32;
+  --moss: #8da66b;
+  --slate: #262b28;
+  --chalk: #e9e4d8;
+  --stone: #8c857b;
+
+  /* ---- 2. Room roles (default: room tone, evening) --------------------- */
+  --room-bg: #1e140e;
+  --room-surface: #2a1c13;
+  --room-line: color-mix(in oklab, var(--cream) 18%, var(--room-bg));
+  --room-ink: var(--cream);
+  --room-ink-soft: var(--cream-soft);
+  --room-glow: #c9a15a;
+  --window-sky: #28343b;
+  --signature: var(--forest);
+  --signature-ink: var(--cream);
+
+  /* Objects in the room. */
+  --room-wood: var(--walnut-500);
+  --room-wood-deep: var(--walnut-700);
+  --room-wood-light: var(--teak);
+  --room-metal: var(--brass);
+  --room-paper: var(--cream);
+  --room-paper-ink: var(--walnut-800);
+  --room-alert: var(--persimmon);
+  --room-plant: var(--moss);
+  --room-slate: var(--slate);
+  --room-chalk: var(--chalk);
+  --room-focus: var(--brass);
+
+  /* Release status (Workshop). */
+  --room-status-demo: var(--brass);
+  --room-status-studio: var(--persimmon);
+  --room-status-pressed: var(--forest);
+  --room-status-out: var(--stone);
+
+  /* ---- Type ----------------------------------------------------------- */
+  --font-sans: 'Jost', futura, 'Century Gothic', sans-serif;
+  --font-display: 'Shippori Mincho', georgia, serif;
+  --font-mono: 'DM Mono', ui-monospace, monospace;
+  --font-chalk: 'Caveat', cursive;
+  --type-sm: 0.875rem;
+  --type-base: 1.0625rem;
+  --type-md: 1.25rem;
+  --type-lg: 1.625rem;
+  --type-xl: 2.5rem;
+  --type-2xl: 3.75rem;
+  --leading-tight: 1.15;
+  --leading-body: 1.6;
+
+  /* ---- Space ---------------------------------------------------------- */
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2.5rem;
+  --space-5: 4rem;
+  --space-6: 6rem;
+  --container: 80rem;
+  --measure: 34rem;
+  --target-min: 2.75rem;
+  --radius-sm: 0.25rem;
+  --radius-pill: 999px;
+
+  /* ---- Motion --------------------------------------------------------- */
+  --ease-settle: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-heavy: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-quick: 180ms;
+  --dur-move: 600ms;
+  --dur-light: 6s;
+  --rpm-33: 1.8s;
+}
+
+/* ---- 3. Modifiers ----------------------------------------------------- */
+
+/* Phases follow the owner's clock (room tone only). */
+:root[data-phase='dawn'] {
+  --room-bg: #2a1f18;
+  --room-surface: #3a2b20;
+  --room-glow: #d9a77a;
+  --window-sky: #8a9aa6;
+}
+
+:root[data-phase='day'] {
+  --room-bg: #33251b;
+  --room-surface: #433024;
+  --room-glow: #e6c58a;
+  --window-sky: #a9bfc9;
+}
+
+:root[data-phase='golden'] {
+  --room-bg: #2e1d12;
+  --room-surface: #3f2818;
+  --room-glow: #e0a04a;
+  --window-sky: #d39a5f;
+}
+
+:root[data-phase='evening'] {
+  --room-bg: #1e140e;
+  --room-surface: #2a1c13;
+  --room-glow: #c9a15a;
+  --window-sky: #28343b;
+}
+
+:root[data-phase='night'] {
+  --room-bg: #170f0a;
+  --room-surface: #22170f;
+  --room-glow: #b88d4a;
+  --window-sky: #141c22;
+}
+
+:root[data-phase='after-hours'] {
+  --room-bg: #100a07;
+  --room-surface: #1a110b;
+  --room-glow: #8f6a35;
+  --window-sky: #0c1115;
+}
+
+/* Phase drift: set by the runtime only while the clock moves between phases. */
+:root[data-drifting] {
+  transition:
+    --room-bg var(--dur-light) linear,
+    --room-surface var(--dur-light) linear,
+    --room-glow var(--dur-light) linear,
+    --window-sky var(--dur-light) linear;
+}
+
+/* Paper tone: Workshop and Liner Notes. Ignores phase. */
+:root[data-tone='paper'] {
+  --room-bg: var(--washi);
+  --room-surface: #e6d9bf;
+  --room-line: color-mix(in oklab, var(--walnut-800) 22%, var(--washi));
+  --room-ink: var(--walnut-800);
+  --room-ink-soft: #5e4a3a;
+  --room-glow: var(--teak);
+  --room-focus: var(--persimmon);
+}
+
+/* Lights up always wins: plain, high contrast, no motion. */
+:root[data-lights='up'] {
+  --room-bg: #fff;
+  --room-surface: #f3f3f1;
+  --room-line: #c9c9c4;
+  --room-ink: #161616;
+  --room-ink-soft: #474747;
+  --room-glow: var(--forest);
+  --window-sky: #e3e9ec;
+  --room-wood: #d4d4cf;
+  --room-wood-deep: #b4b4ae;
+  --room-wood-light: #c4c4be;
+  --room-metal: #474747;
+  --room-paper: #fff;
+  --room-paper-ink: #161616;
+  --room-alert: #a3301a;
+  --room-slate: #161616;
+  --room-chalk: #fff;
+  --room-focus: #161616;
+  --font-display: var(--font-sans);
+}

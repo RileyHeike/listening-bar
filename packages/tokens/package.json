@@ -1,0 +1,31 @@
+{
+  "name": "@bar/tokens",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Design tokens: three-layer CSS (materials, room roles, modifiers) plus TS export of motion and scale tokens.",
+  "exports": {
+    ".": "./src/tokens.ts",
+    "./tokens.css": "./src/tokens.css",
+    "./stylelint-plugin": "./stylelint/plugin.js"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint --max-warnings=0 . && stylelint \"src/**/*.css\"",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "stylelint": "^17.0.0"
+  },
+  "peerDependenciesMeta": {
+    "stylelint": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "stylelint": "17.16.0",
+    "typescript": "6.0.3",
+    "vitest": "5.0.3"
+  }
+}
