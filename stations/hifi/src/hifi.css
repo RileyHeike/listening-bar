@@ -1,0 +1,254 @@
+.hifi__console {
+  display: grid;
+  gap: var(--space-4);
+  align-items: start;
+}
+
+@media (width >= 44rem) {
+  .hifi__console {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  }
+}
+
+/* ---- Turntable ---------------------------------------------------------- */
+
+.hifi__deck {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  filter: drop-shadow(0 1.2rem 1.4rem color-mix(in oklab, var(--room-bg) 70%, transparent));
+}
+
+.hifi__plinth {
+  fill: var(--room-wood);
+}
+
+.hifi__plinth-top {
+  fill: none;
+  stroke: color-mix(in oklab, var(--room-paper) 12%, transparent);
+  stroke-width: 1.5;
+}
+
+.hifi__platter {
+  fill: color-mix(in oklab, var(--room-metal) 35%, var(--room-wood-deep));
+}
+
+.hifi__record {
+  transform-box: view-box;
+  transform-origin: 150px 150px;
+}
+
+.hifi__vinyl {
+  fill: var(--room-slate);
+}
+
+.hifi__groove {
+  fill: none;
+  stroke: color-mix(in oklab, var(--room-paper) 9%, transparent);
+  stroke-width: 0.8;
+}
+
+.hifi__label {
+  fill: var(--signature);
+  stroke: color-mix(in oklab, var(--room-metal) 60%, transparent);
+  stroke-width: 1.2;
+}
+
+.hifi__label-mark {
+  fill: var(--room-paper);
+  opacity: 0.85;
+}
+
+.hifi__sheen {
+  fill: none;
+  stroke: color-mix(in oklab, var(--room-paper) 22%, transparent);
+  stroke-width: 10;
+  stroke-linecap: round;
+}
+
+.hifi__spindle,
+.hifi__pivot-cap {
+  fill: var(--room-metal);
+}
+
+.hifi__pivot {
+  fill: color-mix(in oklab, var(--room-metal) 55%, var(--room-wood-deep));
+}
+
+.hifi__rest {
+  fill: var(--room-wood-deep);
+}
+
+.hifi__arm {
+  transform-box: view-box;
+  transform-origin: 332px 58px;
+  transition: transform 1.6s var(--ease-heavy);
+}
+
+.hifi__arm[data-on-record] {
+  transform: rotate(31deg);
+}
+
+.hifi__arm-tube {
+  stroke: var(--room-metal);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.hifi__counterweight {
+  stroke: color-mix(in oklab, var(--room-metal) 60%, var(--room-slate));
+  stroke-width: 11;
+  stroke-linecap: round;
+}
+
+.hifi__headshell {
+  fill: var(--room-metal);
+}
+
+.hifi__speed-light {
+  fill: color-mix(in oklab, var(--room-paper) 25%, var(--room-wood-deep));
+  transition: fill var(--dur-move) var(--ease-settle);
+}
+
+.hifi__speed-light[data-lit] {
+  fill: var(--room-glow);
+}
+
+.hifi__speed-text {
+  fill: var(--room-paper);
+  font: 400 13px var(--font-mono);
+  opacity: 0.85;
+}
+
+/* ---- Panel ---------------------------------------------------------------- */
+
+.hifi__panel {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.hifi__now {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.hifi__kicker,
+.hifi__recent-title {
+  color: var(--room-glow);
+  font: 400 var(--type-sm) / 1.2 var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
+.hifi__title {
+  overflow: hidden;
+  font: 500 var(--type-lg) / var(--leading-tight) var(--font-display);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.hifi__artist,
+.hifi__meta {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.hifi__artist {
+  color: var(--room-ink);
+}
+
+.hifi__meta {
+  color: var(--room-ink-soft);
+  font: 400 var(--type-sm) / 1.6 var(--font-mono);
+}
+
+.hifi__now[data-state='pending'] .hifi__title {
+  color: var(--room-ink-soft);
+}
+
+.hifi__meters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+  max-width: 24rem;
+}
+
+.hifi__vu {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 8 / 5;
+}
+
+.hifi__vu-face,
+.hifi__vu-mask {
+  fill: var(--room-paper);
+}
+
+.hifi__vu-scale,
+.hifi__vu-tick {
+  fill: none;
+  stroke: var(--room-paper-ink);
+  stroke-width: 1.2;
+}
+
+.hifi__vu-red {
+  fill: none;
+  stroke: var(--room-alert);
+  stroke-width: 4;
+}
+
+.hifi__vu-label {
+  fill: var(--room-paper-ink);
+  font: 400 12px var(--font-mono);
+  text-anchor: middle;
+}
+
+.hifi__vu-channel {
+  fill: var(--room-paper-ink);
+  font: 400 10px var(--font-mono);
+  opacity: 0.7;
+}
+
+.hifi__vu-needle {
+  stroke: var(--room-paper-ink);
+  stroke-width: 1.4;
+  transform-box: view-box;
+  transform-origin: 80px 104px;
+}
+
+.hifi__vu-pivot {
+  fill: var(--room-paper-ink);
+}
+
+.hifi__recent {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.hifi__recent-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hifi__recent-row {
+  display: flex;
+  gap: var(--space-1);
+  justify-content: space-between;
+  min-height: 2.25rem;
+  align-items: center;
+  border-bottom: 1px solid var(--room-line);
+  font-size: var(--type-sm);
+}
+
+.hifi__recent-row[data-empty] {
+  color: var(--room-ink-soft);
+}
+
+.hifi__recent-artist {
+  color: var(--room-ink-soft);
+  text-align: end;
+}

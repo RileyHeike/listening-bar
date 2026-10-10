@@ -1,0 +1,14 @@
+---
+import type { StationContext } from '@bar/core';
+import HiFi from './HiFi.tsx';
+import './hifi.css';
+
+export type Props = StationContext;
+---
+
+<section class="hifi" aria-labelledby="hifi-title">
+  <h2 id="hifi-title" class="visually-hidden">
+    The hi-fi
+  </h2>
+  <HiFi client:visible />
+</section>
