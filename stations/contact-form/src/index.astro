@@ -1,0 +1,17 @@
+---
+import type { StationContext } from '@bar/core';
+import ContactForm from './ContactForm.tsx';
+import './contact-form.css';
+
+export type Props = StationContext;
+---
+
+<section id="contact" class="contact" aria-labelledby="contact-title">
+  <div class="contact__intro">
+    <h2 id="contact-title" class="contact__title">
+      Leave a note at the bar
+    </h2>
+    <p class="contact__lede">[A line about what kinds of conversations you're open to.]</p>
+  </div>
+  <ContactForm client:visible />
+</section>
