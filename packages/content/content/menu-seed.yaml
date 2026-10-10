@@ -1,0 +1,7 @@
+# Chalkboard seed: shown until live `menu.updated` events exist.
+onRotation: '[A record]'
+reading: '[A book]'
+growing: '[A plant]'
+learning: '[A skill]'
+building: '[A project]'
+drinking: '[A drink]'

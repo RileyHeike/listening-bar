@@ -1,0 +1,21 @@
+name: '[Your Name]'
+role: '[Your role]'
+summary: '[Two or three sentences about you: what you do, what you care about, and what you are curious about lately.]'
+availability: 'Happily employed, open to a good conversation'
+location: '[Your city]'
+intro: "[A short, warm intro: what this place is, and what you'll find around the room.]"
+meishi:
+  title: '[Your role]'
+  lines:
+    - '[you@example.com]'
+    - '[Your city]'
+  back: '[A line you like, for the back of the card.]'
+skills:
+  instruments: ['[Language]', '[Language]', '[Framework]']
+  studioGear: ['[Cloud]', '[Tool]', '[Tool]']
+  genres: ['[Domain]', '[Domain]']
+links:
+  - label: '[GitHub]'
+    href: '#'
+  - label: '[LinkedIn]'
+    href: '#'
