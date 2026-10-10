@@ -1,0 +1,37 @@
+---
+/**
+ * Sleeves for every station that owns a page, derived from manifests.
+ * Hover or focus pulls a sleeve; following it morphs the cover into the
+ * destination's hero (shared view-transition-name).
+ */
+import type { StationContext } from '@bar/core';
+import { Sleeve } from '@bar/ui';
+import './record-wall.css';
+
+export type Props = StationContext;
+const { site } = Astro.props;
+---
+
+<section class="record-wall" aria-labelledby="record-wall-title">
+  <div class="record-wall__head">
+    <h2 id="record-wall-title" class="record-wall__title">
+      On the wall
+    </h2>
+    <p class="record-wall__note">Pick a sleeve.</p>
+  </div>
+  <ul class="record-wall__shelf">
+    {site.wall.map((entry) => (
+      <li class="record-wall__slot" data-draft={entry.draft || undefined}>
+        <Sleeve
+          name={entry.name}
+          blurb={entry.blurb}
+          href={entry.route}
+          src={entry.sleeveUrl}
+          transitionName={entry.transitionName}
+          kicker={entry.draft ? 'Being pressed' : undefined}
+        />
+      </li>
+    ))}
+  </ul>
+  <div class="record-wall__plank" aria-hidden="true"></div>
+</section>

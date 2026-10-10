@@ -1,0 +1,49 @@
+.record-wall {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.record-wall__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.record-wall__title {
+  font-size: var(--type-lg);
+}
+
+.record-wall__note {
+  color: var(--room-ink-soft);
+  font: 400 var(--type-sm) / 1 var(--font-mono);
+}
+
+.record-wall__shelf {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 10.5rem), 1fr));
+  gap: var(--space-4) var(--space-3);
+  margin: 0;
+  padding: 0 var(--space-2);
+  list-style: none;
+}
+
+.record-wall__slot[data-draft] .bar-sleeve__cover {
+  opacity: 0.8;
+}
+
+/* The walnut plank the records lean on. */
+.record-wall__plank {
+  height: 1.1rem;
+  margin-top: calc(var(--space-2) * -1);
+  border-radius: 2px;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--room-paper) 14%, transparent) 0 2px,
+      transparent 2px
+    ),
+    var(--room-wood);
+  box-shadow: 0 0.8rem 1.2rem -0.6rem color-mix(in oklab, var(--room-bg) 85%, transparent);
+}
