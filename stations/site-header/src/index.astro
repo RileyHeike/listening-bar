@@ -1,0 +1,32 @@
+---
+import type { StationContext } from '@bar/core';
+import { BAR_HOURS } from '@bar/core';
+import { Crest } from '@bar/ui';
+import HeaderControls from './HeaderControls.tsx';
+import './site-header.css';
+
+export type Props = StationContext;
+const { site, path } = Astro.props;
+const isCurrent = (route: string) => path === route || path.startsWith(`${route}/`);
+const hour = (h: number) =>
+  h === 0 ? '12am' : h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h - 12}pm`;
+const hours = `${hour(BAR_HOURS.opensAt)}–${hour(BAR_HOURS.closesAt)}`;
+---
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="site-header__sign" href="/" aria-label={`${site.name}, home`}>
+      <Crest size="2.25rem" />
+      <span class="site-header__name">{site.name}</span>
+      <span class="site-header__tagline">a listening bar</span>
+    </a>
+    <nav class="site-header__nav" aria-label="Main">
+      {site.nav.map((entry) => (
+        <a href={entry.route} aria-current={isCurrent(entry.route) ? 'page' : undefined}>
+          {entry.name}
+        </a>
+      ))}
+    </nav>
+    <HeaderControls client:load hours={hours} />
+  </div>
+</header>
