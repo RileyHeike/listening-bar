@@ -1,0 +1,5 @@
+import { z } from 'zod'; import { defineEvent } from '../define.ts'; export const
+{{ident}}
+= defineEvent({ type: '{{type}}', domain: '{{domain}}', kind: '{{kind}}', description: '[When this
+event is published.]', versions: { 1: z.object({ // Describe the event's data here. note:
+z.string().min(1), }), }, });

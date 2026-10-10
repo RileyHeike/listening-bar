@@ -1,0 +1,18 @@
+---
+import type { StationContext } from '@bar/core';
+{{#if island}}
+import {{pascal}} from './{{pascal}}.tsx';
+{{/if}}
+import './{{id}}.css';
+
+export type Props = StationContext;
+---
+
+<section class="{{id}}" aria-labelledby="{{id}}-title">
+  <h2 id="{{id}}-title" class="{{id}}__title">{{name}}</h2>
+{{#if island}}
+  <{{pascal}} client:{{hydrate}} />
+{{else}}
+  <p class="{{id}}__body">[Static content for {{name}}.]</p>
+{{/if}}
+</section>

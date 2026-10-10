@@ -1,0 +1,31 @@
+import { StationBoundary, useMotion, useStationLifecycle } from '@bar/room';
+
+/** Static content; also the fallback if the live island fails. */
+function Shell() {
+  return <p className="{{id}}__body">[Live content for {{name}}.]</p>;
+}
+
+function Live() {
+  const motion = useMotion();
+  useStationLifecycle({
+    onEnter: () => {
+      // Start ambient work (subscriptions, ticker callbacks) here.
+    },
+    onLeave: () => {
+      // Stop it here.
+    },
+  });
+  return (
+    <div data-motion={motion ? 'on' : 'off'}>
+      <Shell />
+    </div>
+  );
+}
+
+export default function {{pascal}}() {
+  return (
+    <StationBoundary station="{{id}}" fallback={<Shell />}>
+      <Live />
+    </StationBoundary>
+  );
+}

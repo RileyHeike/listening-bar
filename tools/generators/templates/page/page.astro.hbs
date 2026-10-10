@@ -1,0 +1,29 @@
+---
+{{#if hasParams}}
+import type { GetStaticPaths } from 'astro';
+{{/if}}
+import SlotOutlet from '{{up}}components/SlotOutlet.astro';
+import Base from '{{up}}layouts/Base.astro';
+import page from '{{up}}page-defs/{{id}}.ts';
+{{#if hasParams}}
+
+// List every page to build, e.g. from a @bar/content loader.
+export const getStaticPaths = (() => []) satisfies GetStaticPaths;
+{{/if}}
+---
+
+<Base page='{page}'>
+  <div class='page {{id}}'>
+    {{#each slotList}}
+      <SlotOutlet page='{page}' name='{{this}}' />
+    {{/each}}
+  </div>
+</Base>
+
+<style>
+  .{{id}}{
+     display: grid;
+     gap: var(--space-5);
+     padding-block: var(--space-5) var(--space-6);
+   }
+</style>
