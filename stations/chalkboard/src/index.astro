@@ -1,0 +1,24 @@
+---
+import { getMenuSeed } from '@bar/content';
+import type { StationContext } from '@bar/core';
+import Chalkboard from './Chalkboard.tsx';
+import './chalkboard.css';
+
+export type Props = StationContext;
+// The seed renders in the static shell; live updates replace it.
+const seed = getMenuSeed();
+---
+
+<section class="chalkboard" aria-labelledby="chalkboard-title">
+  <div class="chalkboard__frame">
+    <div class="chalkboard__slate">
+      <h2 id="chalkboard-title" class="chalkboard__title">
+        Tonight's menu
+      </h2>
+      <Chalkboard client:visible seed={seed} />
+    </div>
+    <div class="chalkboard__ledge" aria-hidden="true">
+      <span class="chalkboard__chalk"></span>
+    </div>
+  </div>
+</section>

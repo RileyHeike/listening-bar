@@ -1,0 +1,91 @@
+.chalkboard__frame {
+  padding: 0.85rem;
+  border-radius: 4px;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--room-paper) 10%, transparent),
+      transparent 40%
+    ),
+    var(--room-wood);
+  box-shadow: 0 1rem 1.6rem -0.8rem color-mix(in oklab, var(--room-bg) 85%, transparent);
+}
+
+.chalkboard__slate {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-3) var(--space-2);
+  border-radius: 2px;
+  background:
+    radial-gradient(
+      ellipse at 30% 20%,
+      color-mix(in oklab, var(--room-chalk) 7%, transparent),
+      transparent 60%
+    ),
+    var(--room-slate);
+  color: var(--room-chalk);
+}
+
+.chalkboard__title {
+  font: 600 var(--type-xl) / 1 var(--font-chalk);
+  transform: rotate(-1.5deg);
+}
+
+.chalkboard__rows {
+  display: grid;
+  margin: 0;
+}
+
+.chalkboard__row {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: baseline;
+  padding-block: 0.55rem;
+  border-bottom: 1px dashed color-mix(in oklab, var(--room-chalk) 22%, transparent);
+}
+
+.chalkboard__row:last-child {
+  border-bottom: 0;
+}
+
+.chalkboard__row dt {
+  color: color-mix(in oklab, var(--room-chalk) 65%, var(--room-slate));
+  font: 400 var(--type-sm) / 1.3 var(--font-mono);
+}
+
+.chalkboard__row dd {
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  animation: chalk-in var(--dur-move) var(--ease-settle);
+}
+
+.chalkboard__ledge {
+  position: relative;
+  height: 0.6rem;
+  margin: 0.5rem -0.3rem -0.3rem;
+  border-radius: 2px;
+  background: var(--room-wood-deep);
+}
+
+.chalkboard__chalk {
+  position: absolute;
+  top: -0.3rem;
+  left: 18%;
+  width: 2.2rem;
+  height: 0.35rem;
+  border-radius: 0.2rem;
+  background: var(--room-chalk);
+}
+
+@keyframes chalk-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
