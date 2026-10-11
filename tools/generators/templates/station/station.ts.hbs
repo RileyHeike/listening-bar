@@ -1,15 +1,18 @@
-import { defineStation } from '@bar/core'; export default defineStation({ manifestVersion: 1, id:
-{{{str id}}}, name:
-{{{str name}}},
+import { defineStation } from '@bar/core';
+
+export default defineStation({
+  manifestVersion: 1,
+  id: {{{str id}}},
+  name: {{{str name}}},
 {{#if route}}
-  blurb:
-  {{{str (concat '[One line about ' name '.]')}}},
+  blurb: {{{str (concat "[One line about " name ".]")}}},
 {{/if}}
-targets: [{{{str target}}}],
+  targets: [{{{str target}}}],
 {{#if route}}
-  route:
-  {{{str route}}}, sleeve: { src: './sleeve.svg' },
+  route: {{{str route}}},
+  sleeve: { src: './sleeve.svg' },
 {{/if}}
-hydrate:
-{{{str hydrate}}}, // New stations start as drafts: visible in local, sandbox and preview builds
-only. draft: true, });
+  hydrate: {{{str hydrate}}},
+  // New stations start as drafts: visible in local, sandbox and preview builds only.
+  draft: true,
+});

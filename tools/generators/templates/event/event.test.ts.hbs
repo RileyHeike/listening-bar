@@ -1,8 +1,14 @@
-import { describe, expect, it } from 'vitest'; import { registry } from '../../src/index.ts';
-describe('{{type}}', () => { it('is registered in the
-{{domain}}
-domain as a
-{{kind}}
-event', () => { const definition = registry.get('{{type}}'); expect(definition.domain).toBe('{{domain}}');
-expect(definition.kind).toBe('{{kind}}'); }); it('rejects invalid data', () => { expect(() =>
-registry.create('{{type}}', {} as never, { source: 'test' })).toThrow(); }); });
+import { describe, expect, it } from 'vitest';
+import { registry } from '../../src/index.ts';
+
+describe('{{type}}', () => {
+  it('is registered in the {{domain}} domain as a {{kind}} event', () => {
+    const definition = registry.get('{{type}}');
+    expect(definition.domain).toBe('{{domain}}');
+    expect(definition.kind).toBe('{{kind}}');
+  });
+
+  it('rejects invalid data', () => {
+    expect(() => registry.create('{{type}}', {} as never, { source: 'test' })).toThrow();
+  });
+});

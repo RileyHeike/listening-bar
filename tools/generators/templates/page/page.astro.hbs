@@ -12,18 +12,19 @@ export const getStaticPaths = (() => []) satisfies GetStaticPaths;
 {{/if}}
 ---
 
-<Base page='{page}'>
-  <div class='page {{id}}'>
-    {{#each slotList}}
-      <SlotOutlet page='{page}' name='{{this}}' />
-    {{/each}}
+<Base page={page}>
+  <div class="page {{id}}">
+{{#each slotList}}
+    <SlotOutlet page={page} name="{{this}}" />
+{{/each}}
   </div>
 </Base>
 
 <style>
-  .{{id}}{
-     display: grid;
-     gap: var(--space-5);
-     padding-block: var(--space-5) var(--space-6);
-   }
+  .{{id}} {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+    padding-block: var(--space-5) var(--space-6);
+  }
 </style>
