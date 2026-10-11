@@ -20,12 +20,23 @@ looks only through tokens.
 | `--walnut-500` | #6B4426 | `--cream-soft` | #CDBFA6 |
 | `--teak` | #8A5A34 | `--forest` | #2F4A32 |
 | `--brass` | #C9A15A | `--moss` | #8DA66B |
-| `--persimmon` | #C4652F | | |
+| `--persimmon` | #C4652F | `--slate` | #262B28 |
+| `--chalk` | #E9E4D8 | `--stone` | #8C857B |
 
 **2. Room roles** (the only color tokens stations use): `--room-bg`,
 `--room-surface`, `--room-line`, `--room-ink`, `--room-ink-soft`,
 `--room-glow`, `--window-sky`, `--signature` (default `--forest`; tweakable
-accent). Register color roles with `@property` so phase changes transition.
+accent) and `--signature-ink`. Register color roles with `@property` so phase
+changes transition.
+
+Objects in the room have roles too, so lights-up and tones can remap them:
+`--room-wood` (walnut), `--room-wood-deep`, `--room-wood-light` (teak),
+`--room-metal` (brass), `--room-paper` (cream), `--room-paper-ink`,
+`--room-alert` (persimmon), `--room-plant` (moss), `--room-slate`,
+`--room-chalk`, `--room-focus`. Release statuses: `--room-status-demo`
+(brass), `--room-status-studio` (persimmon), `--room-status-pressed`
+(forest), `--room-status-out` (stone). Values live in
+`packages/tokens/src/tokens.css`.
 
 **3. Modifiers** on `<html>`:
 

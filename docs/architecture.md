@@ -29,8 +29,8 @@ listening-bar/
 │  ├─ server/                server glue: Hono builder, DynamoDB Toolbox client, publisher, secrets, logging
 │  └─ tokens/                design tokens (CSS + TS export)
 ├─ infra/                    CDK app: bin/, stacks/, constructs/, config/<env>.ts
-├─ tools/generators/         turbo gen templates
-├─ fixtures/                 Zod-validated fixture data for stations and tests
+├─ tools/generators/         turbo gen config, templates, smoke test
+├─ fixtures/                 @bar/fixtures: event fixtures, fixture snapshot, StationContext for tests
 ├─ .github/workflows/
 ├─ docs/
 └─ CLAUDE.md
@@ -39,13 +39,14 @@ listening-bar/
 Dependency direction (allowed imports only):
 
 ```
-stations/*  →  @bar/room, @bar/ui, @bar/content, @bar/core, @bar/tokens
-apps/web    →  stations/* (via glob), @bar/room, @bar/ui, @bar/content, @bar/core, @bar/tokens
-@bar/content → @bar/core
-modules/*   →  @bar/server, @bar/core
-infra       →  @bar/core (manifest schemas), modules/* manifests (via glob), infra/extensions
-@bar/room   →  @bar/core
-@bar/server →  @bar/core
+stations/*    →  @bar/room, @bar/ui, @bar/content, @bar/core, @bar/tokens   (tests: @bar/fixtures)
+apps/web      →  stations/* (via glob), @bar/room, @bar/ui, @bar/content, @bar/core, @bar/tokens   (dev only: @bar/fixtures)
+@bar/content  →  @bar/core
+@bar/fixtures →  @bar/core
+modules/*     →  @bar/server, @bar/core
+infra         →  @bar/core (manifest schemas), @bar/server (Lambda entries), modules/* (via glob), infra/extensions
+@bar/room     →  @bar/core
+@bar/server   →  @bar/core
 ```
 
 ## Runtime picture
@@ -76,14 +77,15 @@ flowchart LR
 3. `@bar/room` fetches `/api/room/snapshot`, validates and upcasts each
    envelope, and dispatches them into stores. Placeholders fill in.
 4. The transport subscribes to the AppSync channel namespaces needed by the
-   stations on the current page (from their manifests' `listens`).
+   stations on the current page (from their manifests' `listens`, rendered
+   into `<meta name="bar:domains">`).
 5. On reconnect, the snapshot is fetched again before resuming.
 
 ### Publishing an event (server)
 
-Module handler → `publish(type, data)` from `@bar/server`, which validates
+Module handler → `publish(type, data, { source })` from `@bar/server`, which validates
 against the registry, wraps the envelope, writes it to `room-state` if
-`kind: state`, and publishes to the AppSync namespace for its domain.
+`kind: state`, and publishes to the AppSync channel `/<domain>/room`.
 
 ## Environments
 

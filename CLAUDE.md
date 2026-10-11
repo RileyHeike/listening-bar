@@ -18,7 +18,8 @@ then read the docs it points to for the area you are working in.
 | Events / real-time | `docs/contracts/events.md` |
 | CDK, environments, CI | `docs/infrastructure.md` |
 | Tooling, tests, generators | `docs/workflow.md` |
-| What to build next | `docs/implementation-plan.md` |
+| What to build next | `docs/implementation-plan.md`, `docs/progress.md` |
+| Adding a station, module, event or page | `docs/how-to/` |
 
 ## Golden rules
 
@@ -53,7 +54,8 @@ mise install                 # pinned node, pnpm, aws cli, cdk cli
 pnpm install
 pnpm dev                     # site (+ sandbox endpoints if deployed)
 pnpm dev:site                # front end only, fixtures + control panel
-pnpm test                    # vitest across the workspace
+pnpm test                    # vitest across the workspace (incl. CDK assertions)
+pnpm test:e2e                # Playwright against a local build
 pnpm typecheck
 pnpm lint
 pnpm gen station --id <id> --name "<Name>" --target <page>:<slot>
@@ -62,6 +64,8 @@ pnpm gen event --type <domain.verb> --domain <domain> --kind state|moment
 pnpm gen page --id <id> --route </path> --slots a,b,c
 pnpm sandbox:deploy          # deploy personal dev-<user> backend
 pnpm sandbox:watch           # cdk watch (hotswap) against the sandbox
+pnpm sandbox:destroy         # remove the sandbox and its .env.local entries
+tools/generators/smoke.sh    # prove every generator's output passes all checks
 ```
 
 ## Definition of done (every task)

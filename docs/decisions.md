@@ -95,6 +95,27 @@ scope for the foundation; do not build).
 | Branching | Trunk-based, PR per change | Default |
 | Generators | Turborepo generators: station, module, event, page; flags only | Settled |
 
+## Foundation implementation defaults
+
+Chosen while building the foundation where nothing above decided; each is easy to change.
+
+| Topic | Decision | Status |
+|---|---|---|
+| Toolchain | Node 24 LTS, pnpm 11, TypeScript 6.0 (typescript-eslint does not support 7 yet), exact version pins | Default |
+| Page definitions | `apps/web/src/page-defs/*.ts`, so discovery can validate every target against every page | Default |
+| Station entry props | `StationContext` (page, path, params, manifest-derived nav and wall) | Default |
+| Workshop / Liner Notes on wall and nav | Owned by `workshop-featured` and `liner-intro` (route + sleeve) | Default |
+| Extra tokens | Object and status room roles; materials `--slate`, `--chalk`, `--stone` | Default |
+| Opening hours | Placeholder noon–2am (`BAR_HOURS`) | Default |
+| Owner time zone | `America/Los_Angeles` until set | Default |
+| "Recently spun" | State event `spins.updated` (music domain) | Default |
+| Runtime config | Deployed sites read `/config.json`; fixtures only in dev and `BAR_ENV=local` builds | Default |
+| Real-time auth | Public connect/subscribe via a Lambda authorizer (no expiring API keys); publish IAM only | Default |
+| Real-time channel | `/<domain>/room` in each domain's namespace | Default |
+| CI access | Account-level `account-ci-access` stack: GitHub OIDC, release role, `pr-*`-scoped preview role | Default |
+| Cross-stack reference strength | Pinned to `strong` (exports, as settled above); CDK now recommends `weak` for new projects, which avoids two-step removals | Default |
+| Photo pipeline | Media bucket only; resizing Lambda not built until something uses photos | Default |
+
 ## Open items (ask before implementing)
 
 1. **Bar name and domain.**

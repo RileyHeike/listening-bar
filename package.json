@@ -20,7 +20,8 @@
     "sandbox:deploy": "pnpm --filter @bar/infra run sandbox:deploy",
     "sandbox:watch": "pnpm --filter @bar/infra run sandbox:watch",
     "prepare": "lefthook install",
-    "test:e2e": "turbo run test:e2e"
+    "test:e2e": "turbo run test:e2e",
+    "sandbox:destroy": "pnpm --filter @bar/infra run sandbox:destroy"
   },
   "devDependencies": {
     "@bar/tokens": "workspace:*",
