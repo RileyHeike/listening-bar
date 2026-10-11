@@ -193,6 +193,15 @@ describe('modules', () => {
     stateless.hasResourceProperties('AWS::Lambda::Function', {
       Environment: {
         Variables: Match.objectLike({
+          BAR_ENV: 'staging',
+          POWERTOOLS_SERVICE_NAME: 'staging-plant-care-water',
+          REALTIME_HTTP_HOST: Match.anyValue(),
+        }),
+      },
+    });
+    stateless.hasResourceProperties('AWS::Lambda::Function', {
+      Environment: {
+        Variables: Match.objectLike({
           BAR_TABLE_PLANT_CARE: Match.anyValue(),
           QUEUE_URL: Match.anyValue(),
         }),

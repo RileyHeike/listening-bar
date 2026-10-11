@@ -17,6 +17,8 @@ import type { Realtime } from './realtime.ts';
 
 export interface ModuleConstructProps {
   prefix: string;
+  /** Environment kind (BAR_ENV), e.g. "production". */
+  barEnv: string;
   module: DiscoveredModule;
   /** The group Lambda serving this module's routes. */
   fn: IFunction;
@@ -59,6 +61,7 @@ export class ModuleConstruct extends Construct {
         }),
         bundling,
         environment: {
+          BAR_ENV: props.barEnv,
           SECRETS_PREFIX: props.prefix,
           ROOM_STATE_TABLE: props.roomState.tableName,
           REALTIME_HTTP_HOST: props.realtime.httpHost,

@@ -122,6 +122,7 @@ export class Api extends Construct {
       }
       new ModuleConstruct(this, `Module-${module.manifest.name}`, {
         prefix,
+        barEnv: config.kind,
         module,
         fn,
         table: props.moduleTables.get(module.manifest.name),
