@@ -5,6 +5,13 @@
     "jsx": "react-jsx",
     "types": ["astro/client", "node"]
   },
-  "include": [".astro/types.d.ts", "src", "test", "*.ts", "../../tools/types/astro-modules.d.ts"],
+  "include": [
+    ".astro/types.d.ts",
+    "src",
+    "test",
+    "e2e",
+    "*.ts",
+    "../../tools/types/astro-modules.d.ts"
+  ],
   "exclude": ["dist"]
 }

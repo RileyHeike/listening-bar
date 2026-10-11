@@ -23,6 +23,12 @@
     "dev:site": {
       "cache": false,
       "persistent": true
+    },
+    "test:e2e": {
+      "dependsOn": ["^build"],
+      "env": ["PLAYWRIGHT_BASE_URL", "CI"],
+      "outputs": ["playwright-report/**", "test-results/**"],
+      "cache": false
     }
   }
 }

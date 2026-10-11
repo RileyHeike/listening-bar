@@ -19,7 +19,8 @@
     "gen": "tsx tools/generators/cli.ts",
     "sandbox:deploy": "pnpm --filter @bar/infra run sandbox:deploy",
     "sandbox:watch": "pnpm --filter @bar/infra run sandbox:watch",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install",
+    "test:e2e": "turbo run test:e2e"
   },
   "devDependencies": {
     "@bar/tokens": "workspace:*",
