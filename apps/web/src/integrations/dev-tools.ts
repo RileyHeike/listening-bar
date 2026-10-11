@@ -1,8 +1,9 @@
+import type { RealtimeConfig } from '@bar/room';
 import type { AstroIntegration } from 'astro';
 
 export interface DevToolsOptions {
-  /** Sandbox API origin when `pnpm dev` runs against a deployed sandbox. */
-  sandboxApi: string | undefined;
+  /** Endpoints of a deployed sandbox (from .env.local) when `pnpm dev` uses one. */
+  sandbox: { api: string; realtime: RealtimeConfig | null } | undefined;
 }
 
 /**
@@ -14,23 +15,17 @@ export interface DevToolsOptions {
  * It also decides, at build time, whether fixture data may ship: only in
  * dev and in `BAR_ENV=local` builds (local preview, E2E, Lighthouse).
  */
-export function devTools({ sandboxApi }: DevToolsOptions): AstroIntegration {
+export function devTools({ sandbox }: DevToolsOptions): AstroIntegration {
   return {
     name: 'bar:dev-tools',
     hooks: {
       'astro:config:setup': ({ command, injectRoute, injectScript, updateConfig }) => {
         const dev = command === 'dev';
         const barEnv = process.env.BAR_ENV ?? 'local';
+        // The dev server proxies /api to the sandbox, so the browser stays same-origin.
         const devConfig = {
-          apiBase: dev && sandboxApi ? '/api' : null,
-          realtime:
-            dev && sandboxApi && process.env.SANDBOX_REALTIME_HOST
-              ? {
-                  httpHost: process.env.SANDBOX_REALTIME_HTTP_HOST ?? '',
-                  realtimeHost: process.env.SANDBOX_REALTIME_HOST,
-                  authToken: process.env.SANDBOX_REALTIME_TOKEN ?? '',
-                }
-              : null,
+          apiBase: dev && sandbox ? '/api' : null,
+          realtime: dev && sandbox ? sandbox.realtime : null,
         };
         updateConfig({
           vite: {

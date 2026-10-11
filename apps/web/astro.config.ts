@@ -14,13 +14,25 @@ const repoRoot = fileURLToPath(new URL('../..', import.meta.url));
  * on fixtures only.
  */
 const env = loadEnv(process.env.NODE_ENV ?? 'development', process.cwd(), '');
-const sandboxApi = process.env.BAR_API === 'off' ? undefined : env.SANDBOX_API_URL;
+const sandbox =
+  process.env.BAR_API === 'off' || !env.SANDBOX_API_URL
+    ? undefined
+    : {
+        api: env.SANDBOX_API_URL,
+        realtime: env.SANDBOX_REALTIME_HOST
+          ? {
+              httpHost: env.SANDBOX_REALTIME_HTTP_HOST ?? '',
+              realtimeHost: env.SANDBOX_REALTIME_HOST,
+              authToken: env.SANDBOX_REALTIME_TOKEN ?? '',
+            }
+          : null,
+      };
 
 export default defineConfig({
   output: 'static',
   trailingSlash: 'ignore',
   build: { format: 'directory' },
-  integrations: [react(), devTools({ sandboxApi })],
+  integrations: [react(), devTools({ sandbox })],
   env: {
     schema: {
       BAR_ENV: envField.enum({
@@ -40,7 +52,7 @@ export default defineConfig({
     server: {
       // Stations live outside the app (stations/*); let the dev server read them.
       fs: { allow: [repoRoot] },
-      proxy: sandboxApi ? { '/api': { target: sandboxApi, changeOrigin: true } } : {},
+      proxy: sandbox ? { '/api': { target: sandbox.api, changeOrigin: true } } : {},
     },
     resolve: {
       // One copy of React and of the room runtime's stores, however a package resolves them.
