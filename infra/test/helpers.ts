@@ -19,6 +19,7 @@ export const fixtureExtensions = new Map<string, Extension>([[queue.name, queue]
 
 export const testProject: ProjectSettings = {
   name: 'listening-bar',
+  account: '111111111111',
   region: 'us-west-2',
   certificateRegion: 'us-east-1',
   domain: undefined,
@@ -41,6 +42,8 @@ export async function synth(
     project?: Partial<ProjectSettings>;
     config?: Partial<EnvConfig>;
     extensions?: Map<string, Extension>;
+    /** Account of the CLI credentials (must match the project's). */
+    account?: string;
   } = {},
 ) {
   const app = new App({ context: { 'aws:cdk:bundling-stacks': [] } });
@@ -54,7 +57,7 @@ export async function synth(
     extensions: options.extensions ?? fixtureExtensions,
     // Lambda entries must sit under the repo root (NodejsFunction projectRoot).
     generatedDir: mkdtempSync(join(testGeneratedDir(), 'synth-')),
-    account: '123456789012',
+    account: options.account,
   });
   const assembly = app.synth();
   const template = (name: string) => Template.fromStack(app.node.findChild(name) as never);

@@ -4,12 +4,13 @@
  *
  *   pnpm sandbox:deploy   pnpm sandbox:watch   pnpm sandbox:destroy
  *
- * Needs AWS credentials for the bar's account (run `aws login` or set a
- * profile) and a bootstrapped account (`pnpm exec cdk bootstrap`, once).
+ * Runs as the least-privileged `listening-bar` profile (the
+ * listening-bar-developer role) when it exists in ~/.aws/config, unless
+ * AWS_PROFILE is set. Needs `aws login` and a bootstrapped account.
  */
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { userInfo } from 'node:os';
+import { homedir, userInfo } from 'node:os';
 import { join } from 'node:path';
 import { repoRoot } from '../lib/bundling.ts';
 
@@ -34,8 +35,25 @@ function sandboxUser(): string {
   return userInfo().username;
 }
 
+const PROJECT_PROFILE = 'listening-bar';
+
+/** Prefer the project's developer-role profile for everyday deploys. */
+function awsEnv(): NodeJS.ProcessEnv {
+  if (process.env.AWS_PROFILE) return process.env;
+  const config = join(homedir(), '.aws/config');
+  const hasProfile =
+    existsSync(config) && readFileSync(config, 'utf8').includes(`[profile ${PROJECT_PROFILE}]`);
+  if (!hasProfile) return process.env;
+  console.log(`Using AWS profile "${PROJECT_PROFILE}" (set AWS_PROFILE to override).`);
+  return { ...process.env, AWS_PROFILE: PROJECT_PROFILE };
+}
+
 function cdk(args: string[]): void {
-  const result = spawnSync('pnpm', ['exec', 'cdk', ...args], { cwd: infraDir, stdio: 'inherit' });
+  const result = spawnSync('pnpm', ['exec', 'cdk', ...args], {
+    cwd: infraDir,
+    stdio: 'inherit',
+    env: awsEnv(),
+  });
   if (result.status !== 0) process.exit(result.status ?? 1);
 }
 

@@ -249,6 +249,40 @@ describe('modules', () => {
   });
 });
 
+describe('account access', () => {
+  it('creates a deploy-only developer role and an emailed budget', async () => {
+    const { template } = await synth(
+      { env: 'account' },
+      { project: { alertEmail: 'owner@example.com' } },
+    );
+    const access = template('account-access');
+    const roles = access.findResources('AWS::IAM::Role', {
+      Properties: { RoleName: 'listening-bar-developer' },
+    });
+    const role = JSON.stringify(Object.values(roles)[0]);
+    expect(role).toContain('role/cdk-hnb659fds-*');
+    // Deploys go through CDK's roles; the developer role cannot create or change resources itself.
+    expect(role).not.toMatch(/"Action":"(\*|iam:\*|s3:\*|lambda:\*|dynamodb:\*)"/);
+    access.hasResourceProperties('AWS::Budgets::Budget', {
+      NotificationsWithSubscribers: Match.arrayWith([
+        Match.objectLike({
+          Subscribers: [{ SubscriptionType: 'EMAIL', Address: 'owner@example.com' }],
+        }),
+      ]),
+    });
+  });
+
+  it('pins every stack to the project account and refuses other credentials', async () => {
+    const { assembly } = await synth({ env: 'staging' });
+    expect(assembly.stacks.every((stack) => stack.environment.account === '111111111111')).toBe(
+      true,
+    );
+    await expect(synth({ env: 'staging' }, { account: '222222222222' })).rejects.toThrow(
+      /deploys only to 111111111111/,
+    );
+  });
+});
+
 describe('account stacks', () => {
   it('skip the preview site and CI access until a domain and repository are set', async () => {
     const { assembly } = await synth({ env: 'account' });

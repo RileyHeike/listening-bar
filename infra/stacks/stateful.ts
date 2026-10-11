@@ -1,6 +1,5 @@
 import { RemovalPolicy, Stack } from 'aws-cdk-lib';
 import type { StackProps } from 'aws-cdk-lib';
-import { CfnBudget } from 'aws-cdk-lib/aws-budgets';
 import type { Attribute, ITable } from 'aws-cdk-lib/aws-dynamodb';
 import { AttributeType, BillingMode, Table, TableEncryption } from 'aws-cdk-lib/aws-dynamodb';
 import { BlockPublicAccess, Bucket, BucketEncryption } from 'aws-cdk-lib/aws-s3';
@@ -12,8 +11,6 @@ export interface StatefulStackProps extends StackProps {
   prefix: string;
   config: EnvConfig;
   modules: readonly DiscoveredModule[];
-  /** Account-wide budget alert (created with production only). */
-  budget?: { monthlyUsd: number; email: string } | undefined;
 }
 
 const keyAttribute = (key: { name: string; type: 'S' | 'N' }): Attribute => ({
@@ -74,26 +71,5 @@ export class StatefulStack extends Stack {
       removalPolicy,
       autoDeleteObjects: !config.retainData,
     });
-
-    if (props.budget) {
-      const { email } = props.budget;
-      new CfnBudget(this, 'Budget', {
-        budget: {
-          budgetName: `${prefix}-monthly`,
-          budgetType: 'COST',
-          timeUnit: 'MONTHLY',
-          budgetLimit: { amount: props.budget.monthlyUsd, unit: 'USD' },
-        },
-        notificationsWithSubscribers: [80, 100].map((threshold) => ({
-          notification: {
-            comparisonOperator: 'GREATER_THAN',
-            notificationType: threshold === 100 ? 'FORECASTED' : 'ACTUAL',
-            threshold,
-            thresholdType: 'PERCENTAGE',
-          },
-          subscribers: [{ subscriptionType: 'EMAIL', address: email }],
-        })),
-      });
-    }
   }
 }

@@ -5,6 +5,8 @@
  */
 export const project = {
   name: 'listening-bar',
+  /** The only AWS account this project deploys to; stacks are pinned to it. */
+  account: '441659297085',
   region: 'us-west-2',
   /** Certificates for CloudFront must live here. */
   certificateRegion: 'us-east-1',
@@ -13,7 +15,7 @@ export const project = {
   /** GitHub "owner/repo" allowed to assume CI roles via OIDC. */
   githubRepository: undefined as string | undefined,
   /** Address for the AWS Budgets alert and production alarms. */
-  alertEmail: undefined as string | undefined,
+  alertEmail: 'rileyheike@gmail.com' as string | undefined,
   /** Monthly budget alert threshold, USD. */
   monthlyBudgetUsd: 25,
 } as const;

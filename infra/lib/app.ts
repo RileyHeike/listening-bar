@@ -1,6 +1,7 @@
 import { App, CliCredentialsStackSynthesizer, Tags } from 'aws-cdk-lib';
 import type { Environment } from 'aws-cdk-lib';
 import type { EnvConfig } from '../config/types.ts';
+import { AccountAccessStack } from '../stacks/account-access.ts';
 import { CertificateStack } from '../stacks/certificate.ts';
 import { CiAccessStack } from '../stacks/ci-access.ts';
 import { PreviewSiteStack } from '../stacks/preview-site.ts';
@@ -12,6 +13,7 @@ import type { Target } from './naming.ts';
 
 export interface ProjectSettings {
   name: string;
+  account: string;
   region: string;
   certificateRegion: string;
   domain: string | undefined;
@@ -31,6 +33,10 @@ export interface BuildOptions {
   generatedDir: string;
   /** Built site for production/staging (apps/web/dist). */
   siteDist?: string | undefined;
+  /**
+   * Account the CLI is using. Must match `project.account`, so nothing can
+   * deploy into the wrong account; left undefined in tests.
+   */
   account?: string | undefined;
 }
 
@@ -53,12 +59,28 @@ function allowedOrigins(target: Target, domain: string | undefined): string[] {
 export function buildBarApp(options: BuildOptions): App {
   const app = options.app ?? new App();
   const { project } = options;
-  const env: Environment = { account: options.account, region: project.region };
-  const certEnv: Environment = { account: options.account, region: project.certificateRegion };
+  if (options.account && options.account !== project.account) {
+    throw new Error(
+      `These credentials are for account ${options.account}, but ${project.name} deploys only to ${project.account}.`,
+    );
+  }
+  const env: Environment = { account: project.account, region: project.region };
+  const certEnv: Environment = { account: project.account, region: project.certificateRegion };
   Tags.of(app).add('project', project.name);
 
   if (options.target === 'account') {
     Tags.of(app).add('env', 'account');
+    if (project.alertEmail) {
+      new AccountAccessStack(app, 'account-access', {
+        env,
+        projectName: project.name,
+        budget: { monthlyUsd: project.monthlyBudgetUsd, email: project.alertEmail },
+      });
+    } else {
+      console.warn(
+        'No alertEmail configured: skipping the account access stack (developer role, budget).',
+      );
+    }
     if (!project.domain) {
       console.warn('No domain configured (open decision): skipping the shared preview site.');
     } else {
@@ -79,7 +101,7 @@ export function buildBarApp(options: BuildOptions): App {
           env,
           repository: project.githubRepository,
           previewBucketArn: previewSite.bucket.bucketArn,
-          previewDistributionArn: `arn:aws:cloudfront::${options.account ?? '*'}:distribution/${previewSite.distribution.distributionId}`,
+          previewDistributionArn: `arn:aws:cloudfront::${project.account}:distribution/${previewSite.distribution.distributionId}`,
         });
       }
     }
@@ -104,10 +126,6 @@ export function buildBarApp(options: BuildOptions): App {
     prefix: target.prefix,
     config,
     modules: options.modules,
-    budget:
-      target.kind === 'production' && project.alertEmail
-        ? { monthlyUsd: project.monthlyBudgetUsd, email: project.alertEmail }
-        : undefined,
   });
 
   const domainNames = siteDomains(target, project.domain);
