@@ -1,0 +1,21 @@
+import { Entity, Table, item, string } from 'dynamodb-toolbox';
+
+/**
+ * The module's table (provisioned by infra from module.ts). Its name comes
+ * from the environment variable infra sets for this module.
+ */
+export const {{camel}}Table = new Table({
+  name: () => process.env.{{envName}} ?? '{{name}}',
+  partitionKey: { name: 'pk', type: 'string' },
+  sortKey: { name: 'sk', type: 'string' },
+});
+
+export const Example = new Entity({
+  name: 'Example',
+  table: {{camel}}Table,
+  schema: item({
+    pk: string().key(),
+    sk: string().key(),
+    note: string(),
+  }),
+});

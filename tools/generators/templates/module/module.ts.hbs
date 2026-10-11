@@ -1,0 +1,13 @@
+import { defineModule } from '@bar/core';
+
+export default defineModule({
+  manifestVersion: 1,
+  name: '{{name}}',
+  routes: './src/routes.ts',
+  // Write routes need the admin mechanism, which is still an open decision.
+  access: { 'GET /hello': 'public' },
+  table: {
+    partitionKey: { name: 'pk', type: 'S' },
+    sortKey: { name: 'sk', type: 'S' },
+  },
+});

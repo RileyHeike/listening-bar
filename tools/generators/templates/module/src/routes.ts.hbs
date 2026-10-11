@@ -1,0 +1,15 @@
+import { validate } from '@bar/server';
+import type { Hono } from 'hono';
+import { z } from 'zod';
+
+const HelloQuery = z.object({
+  name: z.string().trim().min(1).max(40).default('friend'),
+});
+
+/** Mounted at /api/{{name}}. Every route validates its input with Zod. */
+export default function routes(app: Hono): void {
+  app.get('/hello', (c) => {
+    const { name } = validate(HelloQuery, c.req.query());
+    return c.json({ message: `Welcome to {{name}}, ${name}.` });
+  });
+}

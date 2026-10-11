@@ -1,0 +1,29 @@
+import { buildApp, createMemoryPublisher, createMemoryStateStore, createPublisher, readConfig } from '@bar/server';
+import { describe, expect, it } from 'vitest';
+import manifest from './module.ts';
+import routes from './src/routes.ts';
+
+const app = () => {
+  const state = createMemoryStateStore();
+  return buildApp([{ name: manifest.name, routes }], {
+    config: readConfig({ BAR_ENV: 'test' }),
+    state,
+    publish: createPublisher({ state, realtime: createMemoryPublisher() }),
+  });
+};
+
+describe('{{name}}', () => {
+  it('has a valid manifest', () => {
+    expect(manifest.name).toBe('{{name}}');
+  });
+
+  it('answers at /api/{{name}}/hello', async () => {
+    const response = await app().request('/api/{{name}}/hello?name=Riley');
+    expect(await response.json()).toEqual({ message: 'Welcome to {{name}}, Riley.' });
+  });
+
+  it('validates input', async () => {
+    const response = await app().request(`/api/{{name}}/hello?name=${'x'.repeat(41)}`);
+    expect(response.status).toBe(400);
+  });
+});

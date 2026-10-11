@@ -147,6 +147,33 @@ export default function generator(plop: PlopTypes.NodePlopAPI): void {
     },
   });
 
+  plop.setGenerator('module', {
+    description: generators.module?.description ?? '',
+    prompts: prompts('module'),
+    actions: (answers) => {
+      const a = clean(answers);
+      const name = a.name ?? '';
+      const data = {
+        ...a,
+        camel: camel(name),
+        envName: `BAR_TABLE_${name.toUpperCase().replace(/-/g, '_')}`,
+      };
+      const dir = `modules/${name}`;
+      return [
+        {
+          type: 'addMany',
+          destination: join(root, dir),
+          base: join(templates, 'module'),
+          templateFiles: join(templates, 'module/**/*.hbs'),
+          globOptions: { dot: true },
+          data,
+          abortOnFail: true,
+        },
+        finish(() => [dir], true),
+      ];
+    },
+  });
+
   plop.setGenerator('event', {
     description: generators.event?.description ?? '',
     prompts: prompts('event'),
