@@ -169,6 +169,8 @@ export default tseslint.config(
       '@typescript-eslint/no-non-null-assertion': 'off',
       // Test fakes often implement async interfaces without awaiting.
       '@typescript-eslint/require-await': 'off',
+      // Asymmetric matchers (expect.objectContaining…) are typed as any.
+      '@typescript-eslint/no-unsafe-assignment': 'off',
     },
   },
   prettier,
