@@ -36,3 +36,4 @@ export type { LocalTransport } from './transport/local.ts';
 export { createLocalTransport } from './transport/local.ts';
 export type { Transport } from './transport/types.ts';
 export { useRoomStore } from './use-store.ts';
+export { createAppSyncTransport } from './transport/appsync.ts';

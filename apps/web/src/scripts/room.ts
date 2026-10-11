@@ -3,7 +3,7 @@
  * once even across client-router navigations, so the runtime (stores,
  * subscriptions, audio) persists for the whole visit.
  */
-import { OFFLINE_CONFIG, fetchRuntimeConfig, startRoom } from '@bar/room';
+import { OFFLINE_CONFIG, createAppSyncTransport, fetchRuntimeConfig, startRoom } from '@bar/room';
 import { PUBLIC_BAR_TIMEZONE } from 'astro:env/client';
 
 const devConfig = import.meta.env.BAR_DEV_CONFIG;
@@ -15,5 +15,6 @@ void startRoom({
   fixtures: import.meta.env.BAR_FIXTURES
     ? async () => (await import('@bar/fixtures')).fixtureSnapshot()
     : undefined,
+  createTransport: (realtime) => createAppSyncTransport(realtime),
   localBus: import.meta.env.DEV,
 });
