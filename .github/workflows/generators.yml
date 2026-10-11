@@ -1,0 +1,26 @@
+name: Generators
+
+# Every generator's output must pass typecheck, lint, tests, a site build
+# and a CDK synth.
+on:
+  pull_request:
+    paths:
+      - tools/generators/**
+      - packages/core/src/events/**
+      - fixtures/src/**
+      - apps/web/src/page-defs/**
+      - apps/web/src/pages/**
+      - infra/**
+      - .github/workflows/generators.yml
+
+permissions:
+  contents: read
+
+jobs:
+  generators:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - run: SMOKE_IN_PLACE=1 tools/generators/smoke.sh

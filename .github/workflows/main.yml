@@ -1,0 +1,36 @@
+name: Main
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: main
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    uses: ./.github/workflows/checks.yml
+
+  staging:
+    needs: checks
+    if: vars.AWS_ACCOUNT_ID != ''
+    uses: ./.github/workflows/deploy.yml
+    with:
+      env: staging
+    permissions:
+      contents: read
+      id-token: write
+
+  # Waits for the approval configured on the "production" GitHub Environment.
+  production:
+    needs: staging
+    uses: ./.github/workflows/deploy.yml
+    with:
+      env: production
+    permissions:
+      contents: read
+      id-token: write

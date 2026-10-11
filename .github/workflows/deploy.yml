@@ -1,0 +1,44 @@
+name: Deploy
+
+# Reused by main.yml: build, deploy one environment, then smoke-check it.
+on:
+  workflow_call:
+    inputs:
+      env:
+        description: staging or production
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: ${{ inputs.env }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/bar-ci-release
+          aws-region: us-west-2
+      - name: Build the site
+        run: BAR_ENV=${{ inputs.env }} pnpm --filter @bar/web run build
+      - name: Deploy ${{ inputs.env }}
+        working-directory: infra
+        run: >
+          pnpm exec cdk deploy --all -c env=${{ inputs.env }}
+          -c siteDist=${{ github.workspace }}/apps/web/dist
+          --require-approval never --outputs-file outputs.json
+      - run: pnpm --filter @bar/infra exec tsx scripts/ci-outputs.ts outputs.json
+      - name: Smoke check
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ env.BAR_SITE_URL }}
+        run: |
+          pnpm --filter @bar/web exec playwright install --with-deps chromium
+          pnpm --filter @bar/web exec playwright test e2e/shell.spec.ts --project desktop

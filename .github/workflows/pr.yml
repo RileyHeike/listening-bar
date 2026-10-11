@@ -1,0 +1,86 @@
+name: Pull request
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    uses: ./.github/workflows/checks.yml
+
+  # Per-PR backend + preview site. Needs the account stacks (pnpm exec cdk
+  # deploy -c env=account) and repository variables AWS_ACCOUNT_ID,
+  # BAR_DOMAIN, PREVIEW_BUCKET and PREVIEW_DISTRIBUTION_ID.
+  preview:
+    needs: checks
+    if: vars.AWS_ACCOUNT_ID != '' && vars.BAR_DOMAIN != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    env:
+      PR: ${{ github.event.pull_request.number }}
+      AWS_REGION: us-west-2
+      PREVIEW_URL: https://pr-${{ github.event.pull_request.number }}.preview.${{ vars.BAR_DOMAIN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/bar-ci-preview
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Deploy pr-${{ env.PR }} backend
+        working-directory: infra
+        run: >
+          pnpm exec cdk deploy --all -c env=preview -c pr=$PR
+          --require-approval never
+          --role-arn arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/bar-ci-preview-exec
+          --outputs-file outputs.json
+      - name: Build the preview site
+        run: BAR_ENV=preview pnpm --filter @bar/web run build
+      - name: Point the site at this PR's backend
+        run: pnpm --filter @bar/infra exec tsx scripts/ci-outputs.ts outputs.json --config ../apps/web/dist/config.json
+      - name: Upload to the shared preview site
+        run: |
+          aws s3 sync apps/web/dist "s3://${{ vars.PREVIEW_BUCKET }}/pr-$PR/" --delete
+          aws cloudfront create-invalidation --distribution-id "${{ vars.PREVIEW_DISTRIBUTION_ID }}" --paths '/*'
+      - name: Integration tests (real DynamoDB and AppSync)
+        run: pnpm --filter @bar/web run test:integration
+      - name: Playwright against the preview
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ env.PREVIEW_URL }}
+        run: |
+          pnpm --filter @bar/web exec playwright install --with-deps chromium
+          pnpm --filter @bar/web run test:e2e
+      - name: Lighthouse (warn only)
+        continue-on-error: true
+        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # 12.6.2
+        with:
+          urls: |
+            ${{ env.PREVIEW_URL }}/
+            ${{ env.PREVIEW_URL }}/workshop
+            ${{ env.PREVIEW_URL }}/liner-notes
+          configPath: apps/web/lighthouserc.json
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+      - name: Comment the preview URL
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const marker = '<!-- bar-preview -->';
+            const body = `${marker}\n🎶 Preview: ${process.env.PREVIEW_URL}\n\nBackend stacks: \`pr-${process.env.PR}-*\` (torn down when this PR closes).`;
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number });
+            const existing = comments.find((c) => c.body?.includes(marker));
+            if (existing) await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            else await github.rest.issues.createComment({ owner, repo, issue_number, body });

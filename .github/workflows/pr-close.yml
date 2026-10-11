@@ -1,0 +1,37 @@
+name: Pull request closed
+
+on:
+  pull_request:
+    types: [closed]
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  teardown:
+    if: vars.AWS_ACCOUNT_ID != '' && vars.BAR_DOMAIN != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      PR: ${{ github.event.pull_request.number }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/bar-ci-preview
+          aws-region: us-west-2
+      - name: Remove the preview site
+        run: aws s3 rm "s3://${{ vars.PREVIEW_BUCKET }}/pr-$PR/" --recursive
+      - name: Destroy pr-${{ env.PR }} stacks
+        working-directory: infra
+        run: >
+          pnpm exec cdk destroy --all -c env=preview -c pr=$PR --force
+          --role-arn arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/bar-ci-preview-exec

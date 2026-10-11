@@ -1,0 +1,30 @@
+name: Checks
+
+# Reused by pr.yml and main.yml. Needs no cloud access.
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - run: pnpm exec prettier --check .
+      - run: pnpm turbo run typecheck lint --output-logs=errors-only
+      # Unit, contract and CDK assertion tests, plus the production-build check.
+      - run: pnpm turbo run test --output-logs=errors-only
+      - name: Playwright smoke on a local build
+        run: |
+          pnpm --filter @bar/web exec playwright install --with-deps chromium
+          pnpm --filter @bar/web run test:e2e
+      - if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 7
