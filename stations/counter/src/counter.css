@@ -39,6 +39,7 @@
 
 .counter__record {
   display: grid;
+  overflow-x: clip;
   perspective: 80rem;
 }
 
