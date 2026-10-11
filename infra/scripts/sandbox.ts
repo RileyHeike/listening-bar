@@ -13,6 +13,7 @@ import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir, userInfo } from 'node:os';
 import { join } from 'node:path';
 import { repoRoot } from '../lib/bundling.ts';
+import { resolveTarget } from '../lib/naming.ts';
 
 const infraDir = join(repoRoot, 'infra');
 const envFile = join(repoRoot, 'apps/web/.env.local');

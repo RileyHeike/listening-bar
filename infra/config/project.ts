@@ -17,5 +17,5 @@ export const project = {
   /** Address for the AWS Budgets alert and production alarms. */
   alertEmail: 'rileyheike@gmail.com' as string | undefined,
   /** Monthly budget alert threshold, USD. */
-  monthlyBudgetUsd: 25,
+  monthlyBudgetUsd: 5,
 } as const;

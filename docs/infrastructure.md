@@ -31,16 +31,26 @@ Modules contain no CDK.
 | `cdk deploy --all -c env=staging` | `staging-*` |
 | `cdk deploy --all -c env=preview -c pr=<n>` | `pr-<n>-stateful`, `pr-<n>-stateless` (no CloudFront) |
 | `pnpm sandbox:deploy` (`-c env=sandbox -c user=<name>`) | `dev-<user>-*` (no CloudFront) |
-| `cdk deploy --all -c env=account` | `account-preview-certificate`, `account-preview-site`, `account-ci-access` (once, after a domain and repository are set) |
+| `cdk deploy --all -c env=account` | `account-access` (developer role, budget); `account-preview-certificate`, `account-preview-site` once a domain is set; `account-ci-access` once a repository is set |
 
-The account must be bootstrapped once (`pnpm --filter @bar/infra exec cdk bootstrap`).
+Every stack is pinned to the project account (`project.account`); synth refuses credentials for any other account.
+CDK is bootstrapped in us-west-2 (shared with other projects in the account) and us-east-1.
+
+## Access (personal account)
+
+- Sign in with IAM Identity Center: `aws sso login --sso-session league-site` (the same session as league-site).
+  Do not use the root user for day-to-day work.
+- `listening-bar-admin` profile: Identity Center `AdministratorAccess`; only for one-time setup (bootstrap, account stacks).
+- `listening-bar` profile: the `listening-bar-developer` role, entered from that sign-in.
+  It can only deploy through the CDK bootstrap roles and read stacks and logs; the sandbox scripts use it automatically.
+- Budget: `listening-bar-monthly`, $5/month, emailed at 80% actual and 100% forecast spend.
 
 ## Naming and safeguards
 
 - Stack and resource names prefixed `<env>-` (`prod`, `staging`, `pr-<n>`, `dev-<user>`); everything tagged `env`, `prefix` and `project`.
 - CI preview role can only act on `pr-*` resources (see below).
 - Production stateful resources: RETAIN, PITR, deletion protection, termination protection.
-- AWS Budgets alert on the account, created with production when `alertEmail` is set.
+- AWS Budgets alert in `account-access` ($5/month to `alertEmail`).
 - Feature flags: CDK's recommended set, with cross-stack references pinned to `strong` (CloudFormation exports, per decisions.md).
 
 ## Cross-stack references
