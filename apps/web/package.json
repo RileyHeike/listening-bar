@@ -11,7 +11,8 @@
     "typecheck": "astro check",
     "lint": "astro sync && eslint --max-warnings=0 . && stylelint \"src/**/*.{css,astro}\"",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
     "@astrojs/react": "7.0.1",
