@@ -16,7 +16,6 @@
   },
   "dependencies": {
     "@bar/core": "workspace:*",
-    "@nanostores/react": "2.0.1",
     "nanostores": "1.5.5",
     "zod": "4.6.5"
   },

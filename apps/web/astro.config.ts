@@ -44,7 +44,7 @@ export default defineConfig({
     },
     resolve: {
       // One copy of React and of the room runtime's stores, however a package resolves them.
-      dedupe: ['react', 'react-dom', 'nanostores', '@nanostores/react'],
+      dedupe: ['react', 'react-dom', 'nanostores'],
     },
   },
 });

@@ -216,9 +216,6 @@ importers:
       '@bar/core':
         specifier: workspace:*
         version: link:../core
-      '@nanostores/react':
-        specifier: 2.0.1
-        version: 2.0.1(nanostores@1.5.5)(react@19.3.0)
       nanostores:
         specifier: 1.5.5
         version: 1.5.5
@@ -2314,13 +2311,6 @@ packages:
 
   '@keyv/serialize@1.1.1':
     resolution: {integrity: sha512-dXn3FZhPv0US+7dtJsIi2R+c7qWYiReoEh5zUntWCf4oSpMNib8FDhSoed6m3QyZdx5hK7iLFkYk3rNxwt8vTA==}
-
-  '@nanostores/react@2.0.1':
-    resolution: {integrity: sha512-txbZTd+7/hnO7FhtF8Pmr+cu0ThdCuCnOyEEh0DsEM2Hp9PfOa5EY4uj3wpZpypSzp5BuqDgf2AxVAKoUIWOFQ==}
-    engines: {node: ^22.0.0 || ^24.0.0 || >=26.0.0}
-    peerDependencies:
-      nanostores: ^1.2.0
-      react: '>=18.0.0'
 
   '@napi-rs/wasm-runtime@1.2.4':
     resolution: {integrity: sha512-AJxoUD2/15ESHbvpcyjU274nsAPLuOtPHCk0vKJM5pj//Fg/B1FXNWjPnXTT9PymCYYiHo4zPj0ZomXBKhoy7g==}
@@ -5931,11 +5921,6 @@ snapshots:
       keyv: 5.6.0
 
   '@keyv/serialize@1.1.1': {}
-
-  '@nanostores/react@2.0.1(nanostores@1.5.5)(react@19.3.0)':
-    dependencies:
-      nanostores: 1.5.5
-      react: 19.3.0
 
   '@napi-rs/wasm-runtime@1.2.4(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)':
     dependencies:

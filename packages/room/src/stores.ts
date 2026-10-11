@@ -2,6 +2,7 @@ import type { Phase } from '@bar/core';
 import { DEFAULT_PHASE } from '@bar/core';
 import type { ReadableAtom, WritableAtom } from 'nanostores';
 import { atom, computed } from 'nanostores';
+import { withServerValue } from './server-value.ts';
 import { readStorage, writeStorage } from './storage.ts';
 
 export type Lights = 'dim' | 'up';
@@ -63,9 +64,9 @@ export const $clockPhase = atom<Phase>(DEFAULT_PHASE);
 export const $phaseOverride = atom<Phase | null>(null);
 
 /** Current lighting phase. */
-export const $phase: ReadableAtom<Phase> = computed(
-  [$clockPhase, $phaseOverride],
-  (clock, override) => override ?? clock,
+export const $phase: ReadableAtom<Phase> = withServerValue(
+  computed([$clockPhase, $phaseOverride], (clock, override) => override ?? clock),
+  DEFAULT_PHASE,
 );
 
 /** Whether the bar is open, by the owner's clock. Null until the clock has run. */
@@ -77,15 +78,18 @@ export const $prefersReducedMotion = atom<boolean>(false);
 /** Dev-only reduced-motion simulation (control panel). */
 export const $reducedMotionOverride = atom<boolean | null>(null);
 
-export const $reducedMotion: ReadableAtom<boolean> = computed(
-  [$prefersReducedMotion, $reducedMotionOverride],
-  (prefers, override) => override ?? prefers,
+export const $reducedMotion: ReadableAtom<boolean> = withServerValue(
+  computed(
+    [$prefersReducedMotion, $reducedMotionOverride],
+    (prefers, override) => override ?? prefers,
+  ),
+  false,
 );
 
 /** Decorative motion allowed: not reduced motion, and lights not up. */
-export const $motion: ReadableAtom<boolean> = computed(
-  [$reducedMotion, $lights],
-  (reduced, lights) => !reduced && lights !== 'up',
+export const $motion: ReadableAtom<boolean> = withServerValue(
+  computed([$reducedMotion, $lights], (reduced, lights) => !reduced && lights !== 'up'),
+  true,
 );
 
 /** Real-time connection status. */
