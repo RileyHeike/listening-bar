@@ -12,4 +12,6 @@ export { RealtimePublishError, createAppSyncPublisher, createMemoryPublisher } f
 export type { StateStore } from './room-state.ts';
 export { createMemoryStateStore, createRoomStateTable, createStateStore } from './room-state.ts';
 export { getSecret } from './secrets.ts';
+export type { ServerRuntime } from './runtime.ts';
+export { publish, serverRuntime, setServerRuntime } from './runtime.ts';
 export { readJson, validate } from './validate.ts';

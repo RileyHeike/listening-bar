@@ -128,3 +128,24 @@ describe('real-time authorizer', () => {
     expect(await authorize({ authorizationToken: 'guess' })).toMatchObject({ isAuthorized: false });
   });
 });
+
+describe('module-facing publish', () => {
+  it('uses the shared runtime, which tests can replace', async () => {
+    const {
+      publish: modulePublish,
+      setServerRuntime,
+      readConfig,
+    } = await import('../src/index.ts');
+    const state = createMemoryStateStore();
+    const realtime = createMemoryPublisher();
+    setServerRuntime({
+      config: readConfig({}),
+      state,
+      realtime,
+      publish: createPublisher({ state, realtime }),
+    });
+    await modulePublish('track.stopped', {}, { source: 'plant-care' });
+    expect(realtime.sent[0]?.channel).toBe('/music/room');
+    setServerRuntime(undefined);
+  });
+});
