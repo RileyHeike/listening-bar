@@ -1,6 +1,7 @@
 /* A walnut panel on the paper page; text sits on wood in paper tones. */
 .contact {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
   padding: var(--space-4);
   border-radius: 4px;
@@ -50,6 +51,8 @@
 
 .contact__field input,
 .contact__field textarea {
+  width: 100%;
+  min-width: 0;
   min-height: var(--target-min);
   padding: 0.6rem 0.8rem;
   border: 1px solid color-mix(in oklab, var(--room-paper) 30%, transparent);
