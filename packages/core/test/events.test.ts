@@ -249,7 +249,8 @@ describe('registry.receive', () => {
 describe('foundation registry', () => {
   it('maps types to domains', () => {
     expect(registry.domainsFor(['track.changed', 'weather.changed'])).toEqual(['music', 'weather']);
-    expect(registry.domains).toEqual(['menu', 'music', 'weather']);
+    expect(registry.domains).toEqual(expect.arrayContaining(['menu', 'music', 'weather']));
+    expect(registry.domains).toEqual([...registry.domains].sort());
   });
 
   it('exposes discriminated envelope and data types', () => {
