@@ -23,7 +23,7 @@
     "@aws-sdk/credential-provider-node": "3.972.85",
     "@aws-sdk/lib-dynamodb": "3.1149.0",
     "@bar/core": "workspace:*",
-    "@hono/aws-lambda": "1.0.0",
+    "@hono/aws-lambda": "1.0.1",
     "@smithy/signature-v4": "5.7.4",
     "dynamodb-toolbox": "2.11.0",
     "hono": "4.13.13",
@@ -31,8 +31,8 @@
   },
   "devDependencies": {
     "@types/aws-lambda": "8.10.164",
-    "@types/node": "24.19.2",
-    "typescript": "6.0.3",
+    "@types/node": "26.6.4",
+    "typescript": "7.0.2",
     "vitest": "5.0.3"
   }
 }
