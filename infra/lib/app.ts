@@ -75,6 +75,8 @@ export function buildBarApp(options: BuildOptions): App {
         env,
         projectName: project.name,
         budget: { monthlyUsd: project.monthlyBudgetUsd, email: project.alertEmail },
+        // Every stack is tagged project=<name> (below), so the budget sees only this project.
+        costTag: { key: 'project', value: project.name },
       });
     } else {
       console.warn(

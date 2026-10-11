@@ -28,9 +28,22 @@ Phases refer to `docs/implementation-plan.md`.
 2. **Domain (open decision):** once named and registered, set `project.domain`, deploy `-c env=account`, and set `BAR_DOMAIN`, `PREVIEW_BUCKET` and `PREVIEW_DISTRIBUTION_ID` from its outputs to turn on previews.
    Validate the `pr-*`-scoped preview policies on the first preview.
 
+## Pending: scope the budget to this project
+
+The account is shared with league-site, so the budget should count only resources tagged `project=listening-bar`.
+That tag becomes available for billing up to 24 hours after the first tagged resources (created 2026-10-11).
+Until then the deployed budget is account-wide; the tag-scoped version is in code but not deployed.
+Once available:
+
+```sh
+aws ce update-cost-allocation-tags-status --profile listening-bar-admin --region us-east-1 \
+  --cost-allocation-tags-status TagKey=project,Status=Active
+cd infra && AWS_PROFILE=listening-bar-admin pnpm exec cdk deploy account-access -c env=account
+```
+
 ## Account setup (done 2026-10-11)
 
-Account 441659297085: CDK bootstrapped in us-west-2 (already, shared) and us-east-1; `account-access` deployed (developer role, $5 budget to rileyheike@gmail.com); profiles `listening-bar-admin` and `listening-bar` added to `~/.aws/config` (backup alongside it).
+Account 441659297085: CDK bootstrapped in us-west-2 (already, shared) and us-east-1; `account-access` deployed (developer role, $5 budget to rileyheike@gmail.com); profiles `listening-bar-admin` and `listening-bar` added to `~/.aws/config` under the Identity Center session `personal` (renamed from `league-site`, which still works; backups alongside the file).
 The sandbox `dev-rileyheike` is running (about $0 idle); `pnpm sandbox:destroy` removes it.
 
 ## Contract refinements to approve

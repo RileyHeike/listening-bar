@@ -38,12 +38,13 @@ CDK is bootstrapped in us-west-2 (shared with other projects in the account) and
 
 ## Access (personal account)
 
-- Sign in with IAM Identity Center: `aws sso login --sso-session league-site` (the same session as league-site).
+- Sign in with IAM Identity Center: `aws sso login --sso-session personal` (one sign-in shared by all personal projects in the account).
   Do not use the root user for day-to-day work.
 - `listening-bar-admin` profile: Identity Center `AdministratorAccess`; only for one-time setup (bootstrap, account stacks).
 - `listening-bar` profile: the `listening-bar-developer` role, entered from that sign-in.
   It can only deploy through the CDK bootstrap roles and read stacks and logs; the sandbox scripts use it automatically.
-- Budget: `listening-bar-monthly`, $5/month, emailed at 80% actual and 100% forecast spend.
+- Budget: `listening-bar-monthly`, $5/month for resources tagged `project=listening-bar` (a cost allocation tag), emailed at 80% actual and 100% forecast spend.
+  The account is shared with other projects, so the budget filters by tag rather than counting the whole account.
 
 ## Naming and safeguards
 

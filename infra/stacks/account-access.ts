@@ -8,6 +8,11 @@ export interface AccountAccessStackProps extends StackProps {
   projectName: string;
   /** Budget alert threshold and recipient. */
   budget: { monthlyUsd: number; email: string };
+  /**
+   * Count only resources with this tag (the account is shared with other
+   * projects). The tag must be activated as a cost allocation tag.
+   */
+  costTag: { key: string; value: string };
 }
 
 const BOOTSTRAP_QUALIFIER = 'hnb659fds';
@@ -20,8 +25,8 @@ const BOOTSTRAP_QUALIFIER = 'hnb659fds';
  *    only assume the CDK bootstrap roles (which CloudFormation and CDK use
  *    to deploy) and read logs and stacks. Admin rights stay with the
  *    owner's own sign-in and are needed only for one-time setup.
- *  - A monthly cost budget that emails the owner at 80% of actual spend
- *    and 100% of forecast spend.
+ *  - A monthly cost budget for this project's tagged resources that emails
+ *    the owner at 80% of actual spend and 100% of forecast spend.
  */
 export class AccountAccessStack extends Stack {
   readonly developerRole: Role;
@@ -77,6 +82,7 @@ export class AccountAccessStack extends Stack {
         budgetType: 'COST',
         timeUnit: 'MONTHLY',
         budgetLimit: { amount: props.budget.monthlyUsd, unit: 'USD' },
+        costFilters: { TagKeyValue: [`user:${props.costTag.key}$${props.costTag.value}`] },
       },
       notificationsWithSubscribers: [
         { threshold: 80, notificationType: 'ACTUAL' },

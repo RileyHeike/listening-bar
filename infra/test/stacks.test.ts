@@ -264,6 +264,7 @@ describe('account access', () => {
     // Deploys go through CDK's roles; the developer role cannot create or change resources itself.
     expect(role).not.toMatch(/"Action":"(\*|iam:\*|s3:\*|lambda:\*|dynamodb:\*)"/);
     access.hasResourceProperties('AWS::Budgets::Budget', {
+      Budget: Match.objectLike({ CostFilters: { TagKeyValue: ['user:project$listening-bar'] } }),
       NotificationsWithSubscribers: Match.arrayWith([
         Match.objectLike({
           Subscribers: [{ SubscriptionType: 'EMAIL', Address: 'owner@example.com' }],
