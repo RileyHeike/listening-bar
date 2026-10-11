@@ -9,7 +9,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "typecheck": "astro check",
-    "lint": "eslint --max-warnings=0 . && stylelint \"src/**/*.{css,astro}\"",
+    "lint": "astro sync && eslint --max-warnings=0 . && stylelint \"src/**/*.{css,astro}\"",
     "test": "vitest run"
   },
   "dependencies": {
