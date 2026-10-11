@@ -97,7 +97,7 @@ switch (command) {
       SANDBOX_REALTIME_TOKEN: stateless.RealtimeToken ?? '',
     });
     console.log(
-      `\nSandbox dev-${user} is up. Endpoints written to apps/web/.env.local; run \`pnpm dev\`.`,
+      `\nSandbox ${resolveTarget({ env: 'sandbox', user }).prefix} is up. Endpoints written to apps/web/.env.local; run \`pnpm dev\`.`,
     );
     break;
   }
