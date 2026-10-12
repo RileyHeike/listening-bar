@@ -4,13 +4,23 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
     groups:
       actions:
         patterns: ['*']
+
+  # Minor and patch updates in one monthly PR. Major upgrades (TypeScript,
+  # Node types, Motion, …) are done deliberately, so Dependabot skips them.
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: monthly
+    cooldown:
+      default-days: 7
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
     groups:
       dependencies:
         patterns: ['*']
