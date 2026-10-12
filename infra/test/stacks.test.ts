@@ -293,7 +293,7 @@ describe('account stacks', () => {
   it('give CI release access before there is a domain, without preview roles', async () => {
     const { assembly, template } = await synth(
       { env: 'account' },
-      { project: { githubRepository: 'owner/listening-bar' } },
+      { project: { github: { repository: 'owner/listening-bar', ownerId: 1, repositoryId: 2 } } },
     );
     expect(assembly.stacks.map((s) => s.stackName)).toEqual(['account-ci-access']);
     const roles = template('account-ci-access').findResources('AWS::IAM::Role');
@@ -301,19 +301,24 @@ describe('account stacks', () => {
       (r) => (r as { Properties: { RoleName: string } }).Properties.RoleName,
     );
     expect(names).toEqual(['bar-ci-release']);
-    expect(JSON.stringify(roles)).toContain('repo:owner/listening-bar:environment:production');
+    expect(JSON.stringify(roles)).toContain('repo:owner@1/listening-bar@2:environment:production');
   });
 
   it('scope the preview CI role to pr-* stacks and pull requests', async () => {
     const { template } = await synth(
       { env: 'account' },
-      { project: { domain: 'example.com', githubRepository: 'owner/listening-bar' } },
+      {
+        project: {
+          domain: 'example.com',
+          github: { repository: 'owner/listening-bar', ownerId: 1, repositoryId: 2 },
+        },
+      },
     );
     const roles = template('account-ci-access').findResources('AWS::IAM::Role', {
       Properties: { RoleName: 'bar-ci-preview' },
     });
     const role = JSON.stringify(Object.values(roles)[0]);
-    expect(role).toContain('"repo:owner/listening-bar:pull_request"');
+    expect(role).toContain('"repo:owner@1/listening-bar@2:pull_request"');
     expect(role).not.toContain('refs/heads/main');
     expect(role).toContain(':stack/pr-*/*');
     expect(role).not.toMatch(/"cloudformation:\*"[^\]]*"Resource":"\*"/);

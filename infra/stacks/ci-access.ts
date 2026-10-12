@@ -12,8 +12,7 @@ import {
 import type { Construct } from 'constructs';
 
 export interface CiAccessStackProps extends StackProps {
-  /** GitHub "owner/repo". */
-  repository: string;
+  github: GitHubRepository;
   /**
    * Shared preview bucket and distribution (from PreviewSiteStack). The
    * preview roles exist only once previews do (they need the domain).
@@ -22,6 +21,26 @@ export interface CiAccessStackProps extends StackProps {
 }
 
 const GITHUB_OIDC = 'token.actions.githubusercontent.com';
+
+/** A GitHub repository and the permanent numeric ids GitHub puts in OIDC subjects. */
+export interface GitHubRepository {
+  /** "owner/name" */
+  repository: string;
+  ownerId: number;
+  repositoryId: number;
+}
+
+/** GitHub's immutable OIDC subject prefix: "repo:owner@<owner id>/name@<repo id>". */
+export function githubSubjectPrefix({
+  repository,
+  ownerId,
+  repositoryId,
+}: GitHubRepository): string {
+  const [owner, name] = repository.split('/');
+  if (!owner || !name)
+    throw new Error(`GitHub repository must be "owner/name"; got "${repository}".`);
+  return `repo:${owner}@${ownerId}/${name}@${repositoryId}`;
+}
 const BOOTSTRAP_QUALIFIER = 'hnb659fds';
 
 /**
@@ -58,7 +77,7 @@ export class CiAccessStack extends Stack {
         StringLike: { [`${GITHUB_OIDC}:sub`]: subjects },
       });
 
-    const repo = `repo:${props.repository}`;
+    const repo = githubSubjectPrefix(props.github);
     const assetsBucket = `arn:aws:s3:::cdk-${BOOTSTRAP_QUALIFIER}-assets-${account}-${region}`;
     const named = (service: string, resource: string) =>
       `arn:aws:${service}:${region}:${account}:${resource}`;

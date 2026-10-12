@@ -23,7 +23,7 @@ export const testProject: ProjectSettings = {
   region: 'us-west-2',
   certificateRegion: 'us-east-1',
   domain: undefined,
-  githubRepository: undefined,
+  github: undefined,
   alertEmail: undefined,
   monthlyBudgetUsd: 25,
 };

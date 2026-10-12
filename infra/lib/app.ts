@@ -3,6 +3,7 @@ import type { Environment } from 'aws-cdk-lib';
 import type { EnvConfig } from '../config/types.ts';
 import { AccountAccessStack } from '../stacks/account-access.ts';
 import { CertificateStack } from '../stacks/certificate.ts';
+import type { GitHubRepository } from '../stacks/ci-access.ts';
 import { CiAccessStack } from '../stacks/ci-access.ts';
 import { PreviewSiteStack } from '../stacks/preview-site.ts';
 import { StatefulStack } from '../stacks/stateful.ts';
@@ -17,7 +18,7 @@ export interface ProjectSettings {
   region: string;
   certificateRegion: string;
   domain: string | undefined;
-  githubRepository: string | undefined;
+  github: GitHubRepository | undefined;
   alertEmail: string | undefined;
   monthlyBudgetUsd: number;
 }
@@ -105,10 +106,10 @@ export function buildBarApp(options: BuildOptions): App {
       };
     }
     // Staging and production deploys need CI access even before there is a domain.
-    if (project.githubRepository) {
+    if (project.github) {
       new CiAccessStack(app, 'account-ci-access', {
         env,
-        repository: project.githubRepository,
+        github: project.github,
         previews,
       });
     } else {
