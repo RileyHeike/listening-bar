@@ -290,6 +290,20 @@ describe('account stacks', () => {
     expect(assembly.stacks).toEqual([]);
   });
 
+  it('give CI release access before there is a domain, without preview roles', async () => {
+    const { assembly, template } = await synth(
+      { env: 'account' },
+      { project: { githubRepository: 'owner/listening-bar' } },
+    );
+    expect(assembly.stacks.map((s) => s.stackName)).toEqual(['account-ci-access']);
+    const roles = template('account-ci-access').findResources('AWS::IAM::Role');
+    const names = Object.values(roles).map(
+      (r) => (r as { Properties: { RoleName: string } }).Properties.RoleName,
+    );
+    expect(names).toEqual(['bar-ci-release']);
+    expect(JSON.stringify(roles)).toContain('repo:owner/listening-bar:environment:production');
+  });
+
   it('scope the preview CI role to pr-* stacks and pull requests', async () => {
     const { template } = await synth(
       { env: 'account' },

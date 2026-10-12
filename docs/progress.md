@@ -24,7 +24,8 @@ Phases refer to `docs/implementation-plan.md`.
 
 ## To finish the foundation
 
-1. **GitHub:** push the repository, set `project.githubRepository` in `infra/config/project.ts`, create `staging` and `production` Environments (required reviewers on production), and set the `AWS_ACCOUNT_ID` repository variable.
+1. **GitHub (done 2026-10-11):** repository `RileyHeike/listening-bar`; `account-ci-access` deployed (GitHub OIDC provider, `bar-ci-release`); `AWS_ACCOUNT_ID` set; Environments `staging` and `production` (main only; production requires RileyHeike's approval).
+   Pushes to `main` deploy staging, then wait for approval to deploy production.
 2. **Domain (open decision):** once named and registered, set `project.domain`, deploy `-c env=account`, and set `BAR_DOMAIN`, `PREVIEW_BUCKET` and `PREVIEW_DISTRIBUTION_ID` from its outputs to turn on previews.
    Validate the `pr-*`-scoped preview policies on the first preview.
 

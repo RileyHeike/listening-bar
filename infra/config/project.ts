@@ -13,7 +13,7 @@ export const project = {
   /** e.g. "example.com" once the bar is named and the domain registered. */
   domain: undefined as string | undefined,
   /** GitHub "owner/repo" allowed to assume CI roles via OIDC. */
-  githubRepository: undefined as string | undefined,
+  githubRepository: 'RileyHeike/listening-bar' as string | undefined,
   /** Address for the AWS Budgets alert and production alarms. */
   alertEmail: 'rileyheike@gmail.com' as string | undefined,
   /** Monthly budget alert threshold, USD. */

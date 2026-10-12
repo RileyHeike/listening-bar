@@ -83,6 +83,7 @@ export function buildBarApp(options: BuildOptions): App {
         'No alertEmail configured: skipping the account access stack (developer role, budget).',
       );
     }
+    let previews: { bucketArn: string; distributionArn: string } | undefined;
     if (!project.domain) {
       console.warn('No domain configured (open decision): skipping the shared preview site.');
     } else {
@@ -98,17 +99,21 @@ export function buildBarApp(options: BuildOptions): App {
         domain: project.domain,
         certificate: certificate.certificate,
       });
-      if (project.githubRepository) {
-        new CiAccessStack(app, 'account-ci-access', {
-          env,
-          repository: project.githubRepository,
-          previewBucketArn: previewSite.bucket.bucketArn,
-          previewDistributionArn: `arn:aws:cloudfront::${project.account}:distribution/${previewSite.distribution.distributionId}`,
-        });
-      }
+      previews = {
+        bucketArn: previewSite.bucket.bucketArn,
+        distributionArn: `arn:aws:cloudfront::${project.account}:distribution/${previewSite.distribution.distributionId}`,
+      };
     }
-    if (!project.githubRepository)
+    // Staging and production deploys need CI access even before there is a domain.
+    if (project.githubRepository) {
+      new CiAccessStack(app, 'account-ci-access', {
+        env,
+        repository: project.githubRepository,
+        previews,
+      });
+    } else {
       console.warn('No GitHub repository configured: skipping CI access.');
+    }
     return app;
   }
 

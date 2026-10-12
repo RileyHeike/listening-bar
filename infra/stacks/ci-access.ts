@@ -2,7 +2,7 @@ import { CfnOutput, Duration, Stack } from 'aws-cdk-lib';
 import type { StackProps } from 'aws-cdk-lib';
 import {
   Effect,
-  OpenIdConnectProvider,
+  OidcProviderNative,
   PolicyDocument,
   PolicyStatement,
   Role,
@@ -14,9 +14,11 @@ import type { Construct } from 'constructs';
 export interface CiAccessStackProps extends StackProps {
   /** GitHub "owner/repo". */
   repository: string;
-  /** Shared preview bucket and distribution (from PreviewSiteStack). */
-  previewBucketArn: string;
-  previewDistributionArn: string;
+  /**
+   * Shared preview bucket and distribution (from PreviewSiteStack). The
+   * preview roles exist only once previews do (they need the domain).
+   */
+  previews?: { bucketArn: string; distributionArn: string } | undefined;
 }
 
 const GITHUB_OIDC = 'token.actions.githubusercontent.com';
@@ -28,7 +30,7 @@ const BOOTSTRAP_QUALIFIER = 'hnb659fds';
  *
  *  - bar-ci-release: main branch and the staging/production GitHub
  *    Environments; deploys through the CDK bootstrap roles.
- *  - bar-ci-preview: pull requests; can only touch "pr-*" resources. Preview
+ *  - bar-ci-preview (once previews exist): pull requests; can only touch "pr-*" resources. Preview
  *    stacks deploy with CLI credentials and the scoped CloudFormation
  *    execution role bar-ci-preview-exec (`cdk deploy --role-arn …`).
  *
@@ -38,19 +40,20 @@ const BOOTSTRAP_QUALIFIER = 'hnb659fds';
  */
 export class CiAccessStack extends Stack {
   readonly releaseRole: Role;
-  readonly previewRole: Role;
-  readonly previewExecutionRole: Role;
+  readonly previewRole: Role | undefined;
+  readonly previewExecutionRole: Role | undefined;
 
   constructor(scope: Construct, id: string, props: CiAccessStackProps) {
     super(scope, id, props);
     const { account, region } = this;
-    const provider = new OpenIdConnectProvider(this, 'GitHub', {
+    // One GitHub OIDC provider per account; other projects' roles can trust it too.
+    const provider = new OidcProviderNative(this, 'GitHub', {
       url: `https://${GITHUB_OIDC}`,
       clientIds: ['sts.amazonaws.com'],
     });
 
     const github = (subjects: string[]) =>
-      new WebIdentityPrincipal(provider.openIdConnectProviderArn, {
+      new WebIdentityPrincipal(provider.oidcProviderArn, {
         StringEquals: { [`${GITHUB_OIDC}:aud`]: 'sts.amazonaws.com' },
         StringLike: { [`${GITHUB_OIDC}:sub`]: subjects },
       });
@@ -83,6 +86,11 @@ export class CiAccessStack extends Stack {
     const tagged = (tag: string) => ({
       StringEquals: { 'aws:ResourceTag/env': tag },
     });
+
+    new CfnOutput(this, 'ReleaseRoleArn', { value: this.releaseRole.roleArn });
+
+    if (!props.previews) return;
+    const previews = props.previews;
 
     this.previewExecutionRole = new Role(this, 'PreviewExecution', {
       roleName: 'bar-ci-preview-exec',
@@ -188,17 +196,17 @@ export class CiAccessStack extends Stack {
             new PolicyStatement({
               sid: 'PreviewSiteUpload',
               actions: ['s3:PutObject', 's3:DeleteObject', 's3:GetObject'],
-              resources: [`${props.previewBucketArn}/pr-*`],
+              resources: [`${previews.bucketArn}/pr-*`],
             }),
             new PolicyStatement({
               sid: 'PreviewSiteList',
               actions: ['s3:ListBucket'],
-              resources: [props.previewBucketArn],
+              resources: [previews.bucketArn],
             }),
             new PolicyStatement({
               sid: 'PreviewSiteInvalidate',
               actions: ['cloudfront:CreateInvalidation'],
-              resources: [props.previewDistributionArn],
+              resources: [previews.distributionArn],
             }),
             new PolicyStatement({
               sid: 'NoProduction',
@@ -212,7 +220,6 @@ export class CiAccessStack extends Stack {
       },
     });
 
-    new CfnOutput(this, 'ReleaseRoleArn', { value: this.releaseRole.roleArn });
     new CfnOutput(this, 'PreviewRoleArn', { value: this.previewRole.roleArn });
     new CfnOutput(this, 'PreviewExecutionRoleArn', { value: this.previewExecutionRole.roleArn });
   }
