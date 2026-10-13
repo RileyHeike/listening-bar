@@ -142,10 +142,21 @@ describe('site', () => {
     });
   });
 
-  it('previews and sandboxes have no CloudFront of their own', async () => {
+  it('gives each preview its own site until the domain exists', async () => {
     (await synth({ env: 'preview', pr: '3' }))
       .template('pr-3-stateless')
+      .hasResourceProperties('AWS::CloudFront::Function', { Name: 'pr-3-directory-index' });
+    (await synth({ env: 'preview', pr: '3' }, { project: { domain: 'example.com' } }))
+      .template('pr-3-stateless')
       .resourceCountIs('AWS::CloudFront::Distribution', 0);
+    (await synth({ env: 'sandbox', user: 'riley' }))
+      .template('dev-riley-stateless')
+      .resourceCountIs('AWS::CloudFront::Distribution', 0);
+  });
+
+  it('uses AWS-managed security headers, so environments cannot alter each other', async () => {
+    const template = (await synth({ env: 'production' })).template('prod-stateless');
+    template.resourceCountIs('AWS::CloudFront::ResponseHeadersPolicy', 0);
   });
 
   it('previews allow their own origin through CORS', async () => {
@@ -290,18 +301,41 @@ describe('account stacks', () => {
     expect(assembly.stacks).toEqual([]);
   });
 
-  it('give CI release access before there is a domain, without preview roles', async () => {
+  it('give CI release and preview access before there is a domain', async () => {
     const { assembly, template } = await synth(
       { env: 'account' },
       { project: { github: { repository: 'owner/listening-bar', ownerId: 1, repositoryId: 2 } } },
     );
     expect(assembly.stacks.map((s) => s.stackName)).toEqual(['account-ci-access']);
-    const roles = template('account-ci-access').findResources('AWS::IAM::Role');
+    const ci = template('account-ci-access');
+    const roles = ci.findResources('AWS::IAM::Role');
     const names = Object.values(roles).map(
-      (r) => (r as { Properties: { RoleName: string } }).Properties.RoleName,
+      (r) => (r as { Properties: { RoleName?: string } }).Properties.RoleName,
     );
-    expect(names).toEqual(['bar-ci-release']);
+    expect(names.sort()).toEqual(['bar-ci-preview', 'bar-ci-preview-exec', 'bar-ci-release']);
     expect(JSON.stringify(roles)).toContain('repo:owner@1/listening-bar@2:environment:production');
+    ci.resourceCountIs('AWS::IAM::OIDCProvider', 1);
+    ci.resourceCountIs('AWS::Lambda::Function', 0);
+  });
+
+  it('let previews manage their own resources but never shared environments', async () => {
+    const { template } = await synth(
+      { env: 'account' },
+      { project: { github: { repository: 'owner/listening-bar', ownerId: 1, repositoryId: 2 } } },
+    );
+    const roles = template('account-ci-access').findResources('AWS::IAM::Role');
+    const json = JSON.stringify(roles);
+    for (const role of ['bar-ci-preview', 'bar-ci-preview-exec']) {
+      const policy = JSON.stringify(
+        Object.values(roles).find(
+          (r) => (r as { Properties: { RoleName?: string } }).Properties.RoleName === role,
+        ),
+      );
+      expect(policy, role).toContain('"Sid":"ProtectSharedEnvironments"');
+      expect(policy, role).toMatch(/"aws:ResourceTag\/env":\["production","staging","account"\]/);
+    }
+    expect(json).toContain(':function/pr-*');
+    expect(json).toContain('"Sid":"IdNamedServices"');
   });
 
   it('scope the preview CI role to pr-* stacks and pull requests', async () => {

@@ -29,7 +29,7 @@ Modules contain no CDK.
 |---|---|
 | `cdk deploy --all -c env=production` (add `-c siteDist=<path>`) | `prod-stateful`, `prod-stateless` (+ `prod-certificate` once a domain is set) |
 | `cdk deploy --all -c env=staging` | `staging-*` |
-| `cdk deploy --all -c env=preview -c pr=<n>` | `pr-<n>-stateful`, `pr-<n>-stateless` (no CloudFront) |
+| `cdk deploy --all -c env=preview -c pr=<n>` (add `-c siteDist=<path>` until there is a domain) | `pr-<n>-stateful`, `pr-<n>-stateless` (with its own CloudFront site until there is a domain) |
 | `pnpm sandbox:deploy` (`-c env=sandbox -c user=<name>`) | `dev-<user>-*` (no CloudFront) |
 | `cdk deploy --all -c env=account` | `account-access` (developer role, budget); `account-preview-certificate`, `account-preview-site` once a domain is set; `account-ci-access` once a repository is set |
 
@@ -67,10 +67,15 @@ Each extension has CDK assertion tests.
 
 ## Previews
 
-- One long-lived PreviewSite stack: S3 bucket with `/pr-<n>/` prefixes, one CloudFront distribution on `*.preview.<domain>`, and a CloudFront Function mapping host `pr-<n>.preview…` to the prefix.
-  It needs the bar's domain (an open decision); until then the account target skips it and PR workflows skip previews.
-- Each PR deploys its own `pr-<n>` stateful + stateless stacks and uploads its build to its prefix, including a `/config.json` with that PR's API and AppSync endpoints.
-- On PR close: delete the prefix, destroy the `pr-<n>` stacks.
+Every pull request from this repository (not forks or Dependabot) gets a full preview: its own `pr-<n>` stateful and stateless stacks, seeded with fixture events, then verified with Playwright, the integration tests and Lighthouse.
+The preview URL is commented on the PR.
+
+- **Until the domain exists:** `pr-<n>-stateless` also owns a CloudFront site, exactly like staging (same-origin `/api`, `config.json` written by the stack), on its default `*.cloudfront.net` domain.
+  CloudFront distributions take several minutes to create and delete, so the first preview deploy and the teardown are the slow steps.
+- **Once the domain exists:** one long-lived PreviewSite stack holds an S3 bucket with `/pr-<n>/` prefixes, one CloudFront distribution on `*.preview.<domain>`, and a CloudFront Function mapping host `pr-<n>.preview…` to the prefix.
+  Each PR uploads its build to its prefix, including a `/config.json` with that PR's API and AppSync endpoints.
+  Switching needs no workflow change: the workflows read the repository variable `BAR_DOMAIN`.
+- On PR close (`pr-close.yml`): delete the prefix (if any) and destroy the `pr-<n>` stacks.
 
 ## CI access
 
@@ -78,9 +83,12 @@ Each extension has CDK assertion tests.
 
 - `bar-ci-release`: trusted for `main` and the `staging` and `production` GitHub Environments; may assume the CDK bootstrap roles.
   Exists before there is a domain, so staging and production deploy without one.
-- `bar-ci-preview` (created once previews exist, which needs the domain): trusted for pull requests only; may manage CloudFormation stacks named `pr-*`, upload to the preview bucket under `pr-*`, and pass the execution role `bar-ci-preview-exec`.
-  Preview stacks use the CLI-credentials synthesizer and deploy with `--role-arn bar-ci-preview-exec`, whose permissions are limited to `pr-*` named resources and resources tagged `env=preview`.
-  Validate these policies in the real account when first enabling previews; widen only what CloudFormation proves it needs.
+- `bar-ci-preview`: trusted for pull requests only; may manage CloudFormation stacks named `pr-*`, read their Lambda logs, pass the execution role `bar-ci-preview-exec`, and (once the domain exists) upload to the shared preview bucket under `pr-*`.
+- `bar-ci-preview-exec`: the CloudFormation execution role for preview stacks (they use the CLI-credentials synthesizer and deploy with `--role-arn`).
+  It may manage `pr-*` named resources (tables, functions, log groups, schedules, topics, roles, buckets, CloudFront functions) and the services whose resources have generated ids (AppSync, API Gateway, CloudFront distributions).
+- Both preview roles explicitly deny every action on resources tagged `env=production`, `env=staging` or `env=account`, so a pull request can never change a shared environment even through a generated-id service.
+
+If a preview deploy is denied, find the action in CloudTrail and widen the exec role by exactly that action, scoped to `pr-*` where the service allows it.
 
 Trust uses GitHub's immutable OIDC subjects, `repo:<owner>@<owner id>/<name>@<repo id>:…` (`project.github` holds the ids).
 A renamed or re-created repository with the same name cannot assume the roles.
@@ -97,13 +105,12 @@ GitHub configuration (repository `RileyHeike/listening-bar`):
 | Workflow | Trigger | Steps |
 |---|---|---|
 | `checks.yml` | reused | format, typecheck, lint, unit + CDK assertion tests, production-build check, Playwright on a local build |
-| `pr.yml` | PR open/sync | checks → deploy `pr-<n>` → upload preview → integration tests, Playwright, Lighthouse (warn) → comment preview URL |
+| `pr.yml` | PR open/sync | checks, PR title, workflow lint (actionlint + zizmor), generator smoke test when generator inputs change → deploy `pr-<n>` → seed fixtures → Playwright, integration tests, Lighthouse (warn) → comment preview URL |
 | `pr-close.yml` | PR closed | tear down preview |
 | `main.yml` | push to main | checks → deploy staging + smoke E2E → manual approval (GitHub Environment) → deploy prod + smoke |
 | `release.yml` | push to main | release-please release PR / tags |
-| `generators.yml` | PR touching generators, events, pages, infra | run every generator and check the output (`tools/generators/smoke.sh`) |
 
-Deploy jobs run only when the repository variable `AWS_ACCOUNT_ID` is set; previews also need `BAR_DOMAIN`, `PREVIEW_BUCKET` and `PREVIEW_DISTRIBUTION_ID` (outputs of the account stacks).
+Deploy jobs run only when the repository variable `AWS_ACCOUNT_ID` is set; once there is a domain, previews also read `BAR_DOMAIN`, `PREVIEW_BUCKET` and `PREVIEW_DISTRIBUTION_ID` (outputs of the account stacks).
 Actions are pinned to commit SHAs; Dependabot proposes updates.
 Required reviewers on GitHub Environments may need a paid plan for private repos.
 

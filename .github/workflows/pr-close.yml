@@ -13,14 +13,20 @@ permissions:
 
 jobs:
   teardown:
-    if: vars.AWS_ACCOUNT_ID != '' && vars.BAR_DOMAIN != ''
+    if: >-
+      vars.AWS_ACCOUNT_ID != ''
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # Deleting a CloudFront distribution takes a while.
+    timeout-minutes: 90
     permissions:
       contents: read
       id-token: write
     env:
       PR: ${{ github.event.pull_request.number }}
+      ACCOUNT: ${{ vars.AWS_ACCOUNT_ID }}
+      DOMAIN: ${{ vars.BAR_DOMAIN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -30,10 +36,13 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/bar-ci-preview
           aws-region: us-west-2
-      - name: Remove the preview site
-        run: aws s3 rm "s3://${{ vars.PREVIEW_BUCKET }}/pr-$PR/" --recursive
+      - name: Remove the shared preview site files
+        if: env.DOMAIN != ''
+        env:
+          PREVIEW_BUCKET: ${{ vars.PREVIEW_BUCKET }}
+        run: aws s3 rm "s3://$PREVIEW_BUCKET/pr-$PR/" --recursive
       - name: Destroy pr-${{ env.PR }} stacks
         working-directory: infra
         run: >
           pnpm exec cdk destroy --all -c env=preview -c "pr=$PR" --force
-          --role-arn arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/bar-ci-preview-exec
+          --role-arn "arn:aws:iam::$ACCOUNT:role/bar-ci-preview-exec"

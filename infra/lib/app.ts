@@ -50,6 +50,13 @@ function siteDomains(target: Target, domain: string | undefined): string[] | und
 }
 
 /** Origins allowed to call an environment's API from another origin. */
+/**
+ * Whether an environment gets its own S3 + CloudFront site. Previews share
+ * one distribution once the domain exists; until then each PR gets its own.
+ */
+const ownsSite = (target: Target, config: EnvConfig, domain: string | undefined) =>
+  config.site || (target.kind === 'preview' && !domain);
+
 function allowedOrigins(target: Target, domain: string | undefined): string[] {
   if (target.kind === 'preview' && target.pr && domain)
     return [`https://pr-${target.pr}.preview.${domain}`];
@@ -138,7 +145,7 @@ export function buildBarApp(options: BuildOptions): App {
 
   const domainNames = siteDomains(target, project.domain);
   const certificate =
-    config.site && domainNames && project.domain
+    ownsSite(target, config, project.domain) && domainNames && project.domain
       ? new CertificateStack(app, `${target.prefix}-certificate`, {
           env: certEnv,
           crossRegionReferences: true,
@@ -158,7 +165,9 @@ export function buildBarApp(options: BuildOptions): App {
     extensions: options.extensions,
     allowedOrigins: allowedOrigins(target, project.domain),
     generatedDir: options.generatedDir,
-    site: config.site ? { dist: options.siteDist, certificate, domainNames } : undefined,
+    site: ownsSite(target, config, project.domain)
+      ? { dist: options.siteDist, certificate, domainNames }
+      : undefined,
     alertEmail: project.alertEmail,
   });
 

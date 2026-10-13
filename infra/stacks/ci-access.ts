@@ -14,8 +14,8 @@ import type { Construct } from 'constructs';
 export interface CiAccessStackProps extends StackProps {
   github: GitHubRepository;
   /**
-   * Shared preview bucket and distribution (from PreviewSiteStack). The
-   * preview roles exist only once previews do (they need the domain).
+   * Shared preview bucket and distribution (from PreviewSiteStack), once the
+   * domain exists. Until then each PR deploys its own site stack.
    */
   previews?: { bucketArn: string; distributionArn: string } | undefined;
 }
@@ -49,7 +49,7 @@ const BOOTSTRAP_QUALIFIER = 'hnb659fds';
  *
  *  - bar-ci-release: main branch and the staging/production GitHub
  *    Environments; deploys through the CDK bootstrap roles.
- *  - bar-ci-preview (once previews exist): pull requests; can only touch "pr-*" resources. Preview
+ *  - bar-ci-preview: pull requests; can only touch "pr-*" resources. Preview
  *    stacks deploy with CLI credentials and the scoped CloudFormation
  *    execution role bar-ci-preview-exec (`cdk deploy --role-arn …`).
  *
@@ -59,8 +59,8 @@ const BOOTSTRAP_QUALIFIER = 'hnb659fds';
  */
 export class CiAccessStack extends Stack {
   readonly releaseRole: Role;
-  readonly previewRole: Role | undefined;
-  readonly previewExecutionRole: Role | undefined;
+  readonly previewRole: Role;
+  readonly previewExecutionRole: Role;
 
   constructor(scope: Construct, id: string, props: CiAccessStackProps) {
     super(scope, id, props);
@@ -102,14 +102,16 @@ export class CiAccessStack extends Stack {
       },
     });
 
-    const tagged = (tag: string) => ({
-      StringEquals: { 'aws:ResourceTag/env': tag },
-    });
-
     new CfnOutput(this, 'ReleaseRoleArn', { value: this.releaseRole.roleArn });
 
-    if (!props.previews) return;
-    const previews = props.previews;
+    /** Never touch shared environments' resources (they are tagged env=…). */
+    const protectShared = new PolicyStatement({
+      sid: 'ProtectSharedEnvironments',
+      effect: Effect.DENY,
+      actions: ['*'],
+      resources: ['*'],
+      conditions: { StringEquals: { 'aws:ResourceTag/env': ['production', 'staging', 'account'] } },
+    });
 
     this.previewExecutionRole = new Role(this, 'PreviewExecution', {
       roleName: 'bar-ci-preview-exec',
@@ -147,16 +149,41 @@ export class CiAccessStack extends Stack {
               resources: ['arn:aws:s3:::pr-*', 'arn:aws:s3:::pr-*/*'],
             }),
             new PolicyStatement({
-              sid: 'TaggedServices',
-              actions: ['appsync:*', 'apigateway:*'],
+              // These services name resources by random id, so they cannot be
+              // scoped by name; shared environments are protected by tag below.
+              sid: 'IdNamedServices',
+              actions: [
+                'appsync:*',
+                'apigateway:*',
+                'cloudfront:*Distribution*',
+                'cloudfront:*OriginAccessControl*',
+                'cloudfront:CreateInvalidation',
+                'cloudfront:GetInvalidation',
+                'cloudfront:TagResource',
+                'cloudfront:UntagResource',
+                'cloudfront:ListTagsForResource',
+                'cloudfront:GetResponseHeadersPolicy',
+                'cloudfront:GetCachePolicy',
+                'cloudfront:GetOriginRequestPolicy',
+              ],
               resources: ['*'],
-              conditions: {
-                'ForAnyValue:StringEquals': {
-                  'aws:RequestTag/env': 'preview',
-                  'aws:ResourceTag/env': 'preview',
-                },
-              },
             }),
+            new PolicyStatement({
+              sid: 'PreviewFunctions',
+              actions: ['cloudfront:*Function*'],
+              resources: [`arn:aws:cloudfront::${account}:function/pr-*`],
+            }),
+            new PolicyStatement({
+              // CDK's BucketDeployment publishes an AWS CLI layer with a generated name.
+              sid: 'LambdaLayers',
+              actions: [
+                'lambda:PublishLayerVersion',
+                'lambda:GetLayerVersion',
+                'lambda:DeleteLayerVersion',
+              ],
+              resources: [named('lambda', 'layer:*')],
+            }),
+            protectShared,
             new PolicyStatement({
               sid: 'BootstrapReads',
               actions: ['s3:GetObject', 'ssm:GetParameters', 'ssm:GetParameter'],
@@ -213,27 +240,30 @@ export class CiAccessStack extends Stack {
               ],
             }),
             new PolicyStatement({
-              sid: 'PreviewSiteUpload',
-              actions: ['s3:PutObject', 's3:DeleteObject', 's3:GetObject'],
-              resources: [`${previews.bucketArn}/pr-*`],
+              sid: 'ReadPreviewLogs',
+              actions: ['logs:FilterLogEvents', 'logs:GetLogEvents', 'logs:DescribeLogStreams'],
+              resources: [named('logs', 'log-group:/aws/lambda/pr-*:*')],
             }),
-            new PolicyStatement({
-              sid: 'PreviewSiteList',
-              actions: ['s3:ListBucket'],
-              resources: [previews.bucketArn],
-            }),
-            new PolicyStatement({
-              sid: 'PreviewSiteInvalidate',
-              actions: ['cloudfront:CreateInvalidation'],
-              resources: [previews.distributionArn],
-            }),
-            new PolicyStatement({
-              sid: 'NoProduction',
-              effect: Effect.DENY,
-              actions: ['*'],
-              resources: ['*'],
-              conditions: tagged('production'),
-            }),
+            ...(props.previews
+              ? [
+                  new PolicyStatement({
+                    sid: 'PreviewSiteUpload',
+                    actions: ['s3:PutObject', 's3:DeleteObject', 's3:GetObject'],
+                    resources: [`${props.previews.bucketArn}/pr-*`],
+                  }),
+                  new PolicyStatement({
+                    sid: 'PreviewSiteList',
+                    actions: ['s3:ListBucket'],
+                    resources: [props.previews.bucketArn],
+                  }),
+                  new PolicyStatement({
+                    sid: 'PreviewSiteInvalidate',
+                    actions: ['cloudfront:CreateInvalidation'],
+                    resources: [props.previews.distributionArn],
+                  }),
+                ]
+              : []),
+            protectShared,
           ],
         }),
       },

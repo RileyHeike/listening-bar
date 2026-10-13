@@ -8,8 +8,6 @@ import {
   FunctionCode,
   FunctionEventType,
   FunctionRuntime,
-  HeadersFrameOption,
-  HeadersReferrerPolicy,
   OriginRequestPolicy,
   ResponseHeadersPolicy,
   ViewerProtocolPolicy,
@@ -59,25 +57,15 @@ export class Site extends Construct {
     });
 
     const directoryIndex = new CloudFrontFunction(this, 'DirectoryIndex', {
+      // Env-prefixed so the preview CI role can be scoped to "pr-*" functions.
+      functionName: `${props.prefix}-directory-index`,
       runtime: FunctionRuntime.JS_2_0,
       code: FunctionCode.fromInline(DIRECTORY_INDEX_FUNCTION),
     });
 
-    const headers = new ResponseHeadersPolicy(this, 'SecurityHeaders', {
-      securityHeadersBehavior: {
-        strictTransportSecurity: {
-          accessControlMaxAge: Duration.days(365),
-          includeSubdomains: true,
-          override: true,
-        },
-        contentTypeOptions: { override: true },
-        frameOptions: { frameOption: HeadersFrameOption.DENY, override: true },
-        referrerPolicy: {
-          referrerPolicy: HeadersReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
-          override: true,
-        },
-      },
-    });
+    // AWS-managed security headers (HSTS, nosniff, frame options, referrer
+    // policy). Managed, so no environment can change another's.
+    const headers = ResponseHeadersPolicy.SECURITY_HEADERS;
 
     this.distribution = new Distribution(this, 'Distribution', {
       comment: `${props.prefix} site`,

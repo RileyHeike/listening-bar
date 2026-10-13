@@ -78,6 +78,7 @@ scope for the foundation; do not build).
 | Site hosting | S3 + CloudFront (not Amplify) | Settled |
 | Environments | Single AWS account: per-PR previews, staging, production | Settled |
 | Previews | One shared preview distribution, `pr-<n>.preview.<domain>`; each PR has its own backend stacks | Settled |
+| Previews before the domain | Each PR also deploys its own CloudFront site (default `*.cloudfront.net` domain); switches to the shared distribution once the domain is set | Settled |
 | Pipeline | GitHub Actions + OIDC; staging auto, production behind manual approval | Settled |
 | Safeguards | Env prefixes/tags, scoped CI roles, RETAIN on prod data, PITR on prod | Settled |
 
@@ -112,7 +113,7 @@ Chosen while building the foundation where nothing above decided; each is easy t
 | Runtime config | Deployed sites read `/config.json`; fixtures only in dev and `BAR_ENV=local` builds | Default |
 | Real-time auth | Public connect/subscribe via a Lambda authorizer (no expiring API keys); publish IAM only | Default |
 | Real-time channel | `/<domain>/room` in each domain's namespace | Default |
-| CI access | Account-level `account-ci-access` stack: GitHub OIDC, release role, `pr-*`-scoped preview role | Default |
+| CI access | Account-level `account-ci-access` stack: GitHub OIDC, release role, `pr-*`-scoped preview roles that can never touch resources tagged production, staging or account | Default |
 | Cross-stack reference strength | Pinned to `strong` (exports, as settled above); CDK now recommends `weak` for new projects, which avoids two-step removals | Default |
 | Photo pipeline | Media bucket only; resizing Lambda not built until something uses photos | Default |
 
