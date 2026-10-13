@@ -32,8 +32,16 @@ const slug = (path: string) => (path === '/' ? 'room' : path.slice(1).replaceAll
 async function settle(page: Page) {
   await page.waitForLoadState('networkidle');
   await page.evaluate(() => document.fonts.ready);
-  // Let islands hydrate and fill from the fixture snapshot.
+  // `client:visible` islands hydrate only once seen: bring each into view,
+  // wait until every island has hydrated and filled from the fixture
+  // snapshot, then return to the top for the screenshot.
+  for (const island of await page.locator('astro-island').all())
+    await island.scrollIntoViewIfNeeded();
   await page.waitForFunction(() => !document.querySelector('astro-island[ssr]'));
+  await page.evaluate(() => {
+    window.scrollTo(0, 0);
+  });
+  await page.waitForLoadState('networkidle');
 }
 
 async function capture(
