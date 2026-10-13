@@ -16,6 +16,7 @@ The owner is asked only about architecture decisions and design vision.
    | `pr-title` | the title is a Conventional Commit (it becomes the squash commit) |
    | `workflow-lint` | workflows pass actionlint and the zizmor security audit |
    | `generators` | when generator inputs changed, every generator's output still passes every check |
+   | `visual` | screenshots of every page, compared with `main` (see below) |
 
 4. **Merge.** Once every required check passes, auto-merge squashes the PR into `main`, which deploys staging; production still waits for the owner's approval.
 
@@ -24,6 +25,19 @@ The owner is asked only about architecture decisions and design vision.
 - **Owner-reviewed paths** (`.github/CODEOWNERS`): decisions, contracts, the agent rules, design tokens, infrastructure, CI and repo tooling.
   PRs touching them wait for the owner's review even when everything passes.
 - **Decisions.** An agent that needs a decision that is Open, Parked or not covered in `docs/decisions.md` asks in a comment (options and trade-offs), labels the PR or issue `needs-owner`, and stops.
+
+## Visual changes
+
+`visual.yml` screenshots every page in both lighting modes, and the room in every lighting phase, on desktop and phone.
+The clock is fixed and motion reduced, so the same code always produces the same pixels.
+Each push to `main` keeps its screenshots as the baseline; each PR is compared with it and gets a comment listing what changed.
+
+- **Unchanged** (under 0.05% of pixels): nothing to do.
+- **Small** (under 2%): the AI reviewer judges whether the change is intended, using the diff images in the run's `visual-diff` artifact.
+- **Big** (2% or more, or a screenshot that disappeared): the PR is labelled `needs-design-review` and the owner reviews the design.
+
+To look at the screenshots locally: `pnpm --filter @bar/web test:visual` writes them to `apps/web/visual-results/current/`.
+Thresholds are in `apps/web/visual/compare.ts`.
 
 ## Labels
 

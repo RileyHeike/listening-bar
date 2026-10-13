@@ -11,6 +11,7 @@
     "test",
     "e2e",
     "integration",
+    "visual",
     "*.ts",
     "../../tools/types/astro-modules.d.ts"
   ],

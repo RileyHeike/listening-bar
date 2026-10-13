@@ -114,6 +114,7 @@ Chosen while building the foundation where nothing above decided; each is easy t
 | Real-time channel | `/<domain>/room` in each domain's namespace | Default |
 | CI access | Account-level `account-ci-access` stack: GitHub OIDC, release role, `pr-*`-scoped preview role | Default |
 | Cross-stack reference strength | Pinned to `strong` (exports, as settled above); CDK now recommends `weak` for new projects, which avoids two-step removals | Default |
+| Visual regression | Screenshots compared with the latest `main` run (no committed baselines); under 0.05% of pixels is noise, 2% or more needs the owner's design review | Default |
 | Photo pipeline | Media bucket only; resizing Lambda not built until something uses photos | Default |
 
 ## Open items (ask before implementing)
