@@ -100,6 +100,7 @@ GitHub configuration (repository `RileyHeike/listening-bar`):
 | `pr.yml` | PR open/sync | checks → deploy `pr-<n>` → upload preview → integration tests, Playwright, Lighthouse (warn) → comment preview URL |
 | `pr-close.yml` | PR closed | tear down preview |
 | `main.yml` | push to main | checks → deploy staging + smoke E2E → manual approval (GitHub Environment) → deploy prod + smoke |
+| `visual.yml` | push to main, PR | screenshot every page; on PRs compare with `main`, comment, and label big changes `needs-design-review` |
 | `release.yml` | push to main | release-please release PR / tags |
 | `generators.yml` | PR touching generators, events, pages, infra | run every generator and check the output (`tools/generators/smoke.sh`) |
 

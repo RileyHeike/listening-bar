@@ -29,6 +29,7 @@ Versions are pinned exactly; pnpm refuses packages published less than a day ago
 | Integration (real DynamoDB/AppSync) | Vitest | `pnpm --filter @bar/web test:integration` with `BAR_API_URL` etc. | against PR preview |
 | Generators | shell | `tools/generators/smoke.sh` | PRs touching generators |
 | Performance | Lighthouse CI | | preview (warn only) |
+| Visual comparison (every page, both lighting modes, every phase; fixed clock, reduced motion) | Playwright + pixelmatch | `pnpm --filter @bar/web test:visual`, then `visual:compare <baseline> <current> <out>` | PR, against `main`'s screenshots |
 
 ## Conventions
 

@@ -1,0 +1,128 @@
+name: Visual
+
+# Screenshots of every page (both lighting modes, every phase of the room) on
+# a fixed clock with reduced motion. Each push to main keeps its screenshots
+# as the baseline; each PR is compared with the latest baseline.
+#   - big changes (or a screenshot that disappeared): `needs-design-review`,
+#     and the owner reviews the design
+#   - small changes: listed for the AI reviewer, with diff images
+# Thresholds live in apps/web/visual/compare.ts.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: visual-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      big: ${{ steps.compare.outputs.big }}
+      changed: ${{ steps.compare.outputs.changed }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Capture screenshots
+        run: |
+          pnpm --filter @bar/web exec playwright install --with-deps chromium
+          pnpm --filter @bar/web run test:visual
+      - name: Keep as the baseline
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: visual-baseline
+          path: apps/web/visual-results/current
+          retention-days: 90
+          if-no-files-found: error
+      - name: Find the latest baseline from main
+        if: github.event_name == 'pull_request'
+        id: baseline
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          run=$(gh api "repos/$REPO/actions/workflows/visual.yml/runs?branch=main&event=push&status=success&per_page=1" \
+            --jq '.workflow_runs[0].id // empty')
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+          mkdir -p apps/web/visual-results/baseline
+      - name: Download the baseline
+        if: steps.baseline.outputs.run != ''
+        continue-on-error: true # expired or missing: compare reports "no baseline"
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: visual-baseline
+          path: apps/web/visual-results/baseline
+          run-id: ${{ steps.baseline.outputs.run }}
+          github-token: ${{ github.token }}
+      - name: Compare with main
+        if: github.event_name == 'pull_request'
+        id: compare
+        working-directory: apps/web
+        run: |
+          pnpm run visual:compare visual-results/baseline visual-results/current visual-results/report
+          cat visual-results/report/summary.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload the comparison
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: visual-diff
+          path: |
+            apps/web/visual-results/report
+            apps/web/visual-results/current
+          retention-days: 30
+
+  # Separate job so only this one, which runs no PR code, can write to the PR.
+  report:
+    needs: capture
+    if: >-
+      github.event_name == 'pull_request'
+      && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: visual-diff
+          path: visual
+      - name: Comment and label
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          BIG: ${{ needs.capture.outputs.big }}
+        with:
+          script: |
+            const fs = require('node:fs');
+            const LABEL = 'needs-design-review';
+            const big = process.env.BIG === 'true';
+            const marker = '<!-- bar-visual -->';
+            const flag = big ? '<!-- bar-visual:big -->' : '';
+            const summary = fs.readFileSync('visual/report/summary.md', 'utf8');
+            const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = `${marker}${flag}\n${summary}\n[Run and diff images](${run})`;
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number });
+            const existing = comments.find((c) => c.body?.startsWith(marker));
+            const flaggedBefore = existing?.body?.includes('<!-- bar-visual:big -->') ?? false;
+            if (existing) await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            else await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            if (big) {
+              await github.rest.issues.addLabels({ owner, repo, issue_number, labels: [LABEL] });
+            } else if (flaggedBefore) {
+              // Only undo a label this workflow added; a label the owner added stays.
+              await github.rest.issues.removeLabel({ owner, repo, issue_number, name: LABEL }).catch(() => {});
+            }

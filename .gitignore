@@ -12,5 +12,6 @@ cdk.out/
 .cdk-outputs*.json
 playwright-report/
 test-results/
+visual-results/
 .lighthouseci/
 .DS_Store
