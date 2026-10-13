@@ -1,0 +1,39 @@
+# Changes here encode architecture, contracts, tooling, or design vision, so
+# they need the owner's review (enforced by the `main` ruleset). Everything
+# else — stations, modules, events, pages, content — merges once CI and the
+# AI review pass. The last matching line wins.
+
+# Decisions, contracts, and the agent rules themselves
+/docs/decisions.md           @RileyHeike
+/docs/contracts/             @RileyHeike
+/docs/architecture.md        @RileyHeike
+/docs/design-system.md       @RileyHeike
+/CLAUDE.md                   @RileyHeike
+/.claude/                    @RileyHeike
+
+# Contract machinery (adding an event type in events/types/ stays routine)
+/packages/core/src/manifest/            @RileyHeike
+/packages/core/src/events/define.ts     @RileyHeike
+/packages/core/src/events/envelope.ts   @RileyHeike
+/packages/core/src/events/create-registry.ts @RileyHeike
+/packages/core/src/lighting.ts          @RileyHeike
+
+# Design vision: tokens are the whole visual system
+/packages/tokens/            @RileyHeike
+
+# Infrastructure, CI, and repo tooling
+/infra/                      @RileyHeike
+/.github/                    @RileyHeike
+/tools/generators/           @RileyHeike
+/turbo.json                  @RileyHeike
+/pnpm-workspace.yaml         @RileyHeike
+/tsconfig.base.json          @RileyHeike
+/eslint.config.js            @RileyHeike
+/stylelint.config.js         @RileyHeike
+/lefthook.yml                @RileyHeike
+/mise.toml                   @RileyHeike
+/release-please-config.json  @RileyHeike
+
+# Dependency bumps stay routine (Dependabot auto-merges minor and patch updates).
+/infra/package.json
+/packages/tokens/package.json

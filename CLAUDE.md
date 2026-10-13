@@ -20,6 +20,7 @@ then read the docs it points to for the area you are working in.
 | Tooling, tests, generators | `docs/workflow.md` |
 | What to build next | `docs/implementation-plan.md`, `docs/progress.md` |
 | Adding a station, module, event or page | `docs/how-to/` |
+| Working autonomously (branches, PRs, CI, review) | `docs/agents.md` |
 
 ## Golden rules
 
@@ -67,6 +68,34 @@ pnpm sandbox:watch           # cdk watch (hotswap) against the sandbox
 pnpm sandbox:destroy         # remove the sandbox and its .env.local entries
 tools/generators/smoke.sh    # prove every generator's output passes all checks
 ```
+
+## Working autonomously
+
+Agents implement, verify, review and merge on their own; the owner is only
+asked about architecture and design vision. The loop (details:
+`docs/agents.md`):
+
+1. **Work on a branch, never on `main`.** Name it `<type>/<short-slug>`
+   (agents in GitHub use `claude/…`). One issue, one PR. Parallel agents use
+   separate git worktrees (and `BAR_SANDBOX_USER=<name>` for separate
+   sandboxes).
+2. **Implement** with the generators and `docs/how-to/`. Follow the contracts.
+3. **Verify locally**: `pnpm typecheck && pnpm lint && pnpm test`, and
+   `pnpm test:e2e` for anything visible.
+4. **Open a PR** using the template, link the issue, and enable auto-merge:
+   `gh pr create --fill … && gh pr merge --auto --squash`. The PR title must be
+   a Conventional Commit (it becomes the squash commit and drives releases).
+5. **CI does the rest**: checks, a per-PR preview with E2E and integration
+   tests, visual comparison against `main`, and an AI review. Failures and
+   review findings come back to the implementing agent (up to three rounds).
+6. **Stop and ask** instead of choosing when a task needs a decision that is
+   Open, Parked, or not covered in `docs/decisions.md`, or changes the design
+   vision: comment the question with options and trade-offs, add the
+   `needs-owner` label, and stop. Never work around a decision.
+
+Owner-reviewed paths are listed in `.github/CODEOWNERS`; PRs touching them
+wait for the owner even when everything passes. Never approve PRs, merge
+with admin rights, push to `main`, or deploy staging/production yourself.
 
 ## Definition of done (every task)
 

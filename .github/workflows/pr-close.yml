@@ -23,6 +23,8 @@ jobs:
       PR: ${{ github.event.pull_request.number }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
       - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
@@ -33,5 +35,5 @@ jobs:
       - name: Destroy pr-${{ env.PR }} stacks
         working-directory: infra
         run: >
-          pnpm exec cdk destroy --all -c env=preview -c pr=$PR --force
+          pnpm exec cdk destroy --all -c env=preview -c "pr=$PR" --force
           --role-arn arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/bar-ci-preview-exec

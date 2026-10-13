@@ -15,6 +15,61 @@ jobs:
   checks:
     uses: ./.github/workflows/checks.yml
 
+  # Squash merges use the PR title as the commit message, which drives
+  # release-please, so it must follow Conventional Commits.
+  pr-title:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Check the PR title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: printf '%s\n' "$TITLE" | pnpm exec commitlint --verbose
+
+  workflow-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: actionlint
+        run: |
+          curl -sSfL -o actionlint.tgz https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
+          echo "$(curl -sSfL https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_checksums.txt | grep linux_amd64 | cut -d' ' -f1)  actionlint.tgz" | sha256sum -c
+          tar -xzf actionlint.tgz actionlint && ./actionlint -color
+      - name: zizmor (workflow security)
+        run: pipx run zizmor==1.30.1 --min-severity medium .github/workflows
+
+  # Every generator's output must pass typecheck, lint, tests, a site build
+  # and a CDK synth. Always reports (required checks cannot be path-filtered),
+  # but only does the work when generator inputs changed.
+  generators:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - id: changes
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if git diff --name-only "$BASE" HEAD | grep -qE '^(tools/generators/|packages/core/src/(events|manifest)/|fixtures/src/|apps/web/src/(page-defs|pages)/|infra/|packages/server/)'; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No generator inputs changed."
+          fi
+      - if: steps.changes.outputs.run == 'true'
+        uses: ./.github/actions/setup
+      - if: steps.changes.outputs.run == 'true'
+        run: SMOKE_IN_PLACE=1 tools/generators/smoke.sh
+
   # Per-PR backend + preview site. Needs the account stacks (pnpm exec cdk
   # deploy -c env=account) and repository variables AWS_ACCOUNT_ID,
   # BAR_DOMAIN, PREVIEW_BUCKET and PREVIEW_DISTRIBUTION_ID.
@@ -33,6 +88,8 @@ jobs:
       PREVIEW_URL: https://pr-${{ github.event.pull_request.number }}.preview.${{ vars.BAR_DOMAIN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
       - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
@@ -41,7 +98,7 @@ jobs:
       - name: Deploy pr-${{ env.PR }} backend
         working-directory: infra
         run: >
-          pnpm exec cdk deploy --all -c env=preview -c pr=$PR
+          pnpm exec cdk deploy --all -c env=preview -c "pr=$PR"
           --require-approval never
           --role-arn arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/bar-ci-preview-exec
           --outputs-file outputs.json
