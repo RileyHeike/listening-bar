@@ -70,14 +70,18 @@ jobs:
       - if: steps.changes.outputs.run == 'true'
         run: SMOKE_IN_PLACE=1 tools/generators/smoke.sh
 
-  # Per-PR backend + preview site. Needs the account stacks (pnpm exec cdk
-  # deploy -c env=account) and repository variables AWS_ACCOUNT_ID,
-  # BAR_DOMAIN, PREVIEW_BUCKET and PREVIEW_DISTRIBUTION_ID.
+  # Per-PR preview: its own backend stacks and, until the domain exists, its
+  # own CloudFront site (afterwards: pr-<n>.preview.<domain> on the shared
+  # preview distribution). Seeded with fixtures, then verified end to end.
+  # Skipped for forks and Dependabot, which cannot assume AWS roles.
   preview:
     needs: checks
-    if: vars.AWS_ACCOUNT_ID != '' && vars.BAR_DOMAIN != ''
+    if: >-
+      vars.AWS_ACCOUNT_ID != ''
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     permissions:
       contents: read
       id-token: write
@@ -85,7 +89,8 @@ jobs:
     env:
       PR: ${{ github.event.pull_request.number }}
       AWS_REGION: us-west-2
-      PREVIEW_URL: https://pr-${{ github.event.pull_request.number }}.preview.${{ vars.BAR_DOMAIN }}
+      ACCOUNT: ${{ vars.AWS_ACCOUNT_ID }}
+      DOMAIN: ${{ vars.BAR_DOMAIN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -95,29 +100,66 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/bar-ci-preview
           aws-region: ${{ env.AWS_REGION }}
-      - name: Deploy pr-${{ env.PR }} backend
-        working-directory: infra
-        run: >
-          pnpm exec cdk deploy --all -c env=preview -c "pr=$PR"
-          --require-approval never
-          --role-arn arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/bar-ci-preview-exec
-          --outputs-file outputs.json
       - name: Build the preview site
-        run: BAR_ENV=preview pnpm --filter @bar/web run build
-      - name: Point the site at this PR's backend
-        run: pnpm --filter @bar/infra exec tsx scripts/ci-outputs.ts outputs.json --config ../apps/web/dist/config.json
-      - name: Upload to the shared preview site
+        env:
+          BAR_ENV: preview
+        run: pnpm --filter @bar/web run build
+      # A stack whose first create failed cannot be updated, only deleted.
+      - name: Clear a failed earlier attempt
         run: |
-          aws s3 sync apps/web/dist "s3://${{ vars.PREVIEW_BUCKET }}/pr-$PR/" --delete
-          aws cloudfront create-invalidation --distribution-id "${{ vars.PREVIEW_DISTRIBUTION_ID }}" --paths '/*'
-      - name: Integration tests (real DynamoDB and AppSync)
-        run: pnpm --filter @bar/web run test:integration
+          for stack in "pr-$PR-stateless" "pr-$PR-stateful"; do
+            status=$(aws cloudformation describe-stacks --stack-name "$stack" \
+              --query 'Stacks[0].StackStatus' --output text 2>/dev/null || true)
+            case "$status" in
+              ROLLBACK_COMPLETE | ROLLBACK_FAILED | DELETE_FAILED)
+                echo "Deleting $stack ($status)"
+                aws cloudformation delete-stack --stack-name "$stack" \
+                  --role-arn "arn:aws:iam::$ACCOUNT:role/bar-ci-preview-exec"
+                aws cloudformation wait stack-delete-complete --stack-name "$stack"
+                ;;
+            esac
+          done
+      - name: Deploy pr-${{ env.PR }}
+        working-directory: infra
+        run: |
+          site=()
+          if [ -z "$DOMAIN" ]; then site=(-c "siteDist=$GITHUB_WORKSPACE/apps/web/dist"); fi
+          pnpm exec cdk deploy --all -c env=preview -c "pr=$PR" "${site[@]}" \
+            --require-approval never \
+            --role-arn "arn:aws:iam::$ACCOUNT:role/bar-ci-preview-exec" \
+            --outputs-file outputs.json
+      - name: Read endpoints
+        run: |
+          if [ -n "$DOMAIN" ]; then
+            pnpm --filter @bar/infra exec tsx scripts/ci-outputs.ts outputs.json --config ../apps/web/dist/config.json
+          else
+            pnpm --filter @bar/infra exec tsx scripts/ci-outputs.ts outputs.json
+          fi
+      - name: Preview URL
+        run: |
+          if [ -n "$DOMAIN" ]; then
+            echo "PREVIEW_URL=https://pr-$PR.preview.$DOMAIN" >> "$GITHUB_ENV"
+          else
+            echo "PREVIEW_URL=$BAR_SITE_URL" >> "$GITHUB_ENV"
+          fi
+      - name: Upload to the shared preview site
+        if: env.DOMAIN != ''
+        env:
+          PREVIEW_BUCKET: ${{ vars.PREVIEW_BUCKET }}
+          PREVIEW_DISTRIBUTION_ID: ${{ vars.PREVIEW_DISTRIBUTION_ID }}
+        run: |
+          aws s3 sync apps/web/dist "s3://$PREVIEW_BUCKET/pr-$PR/" --delete
+          aws cloudfront create-invalidation --distribution-id "$PREVIEW_DISTRIBUTION_ID" --paths '/*'
+      - name: Seed the backend with fixtures
+        run: pnpm exec tsx apps/web/integration/seed.ts
       - name: Playwright against the preview
         env:
           PLAYWRIGHT_BASE_URL: ${{ env.PREVIEW_URL }}
         run: |
           pnpm --filter @bar/web exec playwright install --with-deps chromium
           pnpm --filter @bar/web run test:e2e
+      - name: Integration tests (real DynamoDB and AppSync)
+        run: pnpm --filter @bar/web run test:integration
       - name: Lighthouse (warn only)
         continue-on-error: true
         uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # 12.6.2
@@ -130,6 +172,7 @@ jobs:
           uploadArtifacts: true
           temporaryPublicStorage: true
       - name: Comment the preview URL
+        if: always() && env.PREVIEW_URL != ''
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |

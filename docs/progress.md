@@ -32,7 +32,7 @@ Every page still shows bracketed placeholder content and `[BAR NAME]`.
 | Production | https://dthhfue0q0cpk.cloudfront.net | `prod-stateful`, `prod-stateless` | Push to `main`, after staging, with RileyHeike's approval in GitHub |
 | Staging | https://d2v6lgq1xw1hwq.cloudfront.net | `staging-stateful`, `staging-stateless` | Every push to `main` |
 | Sandbox | local `pnpm dev` (proxies `/api`) | `dev-rileyheike-*` | `pnpm sandbox:deploy` / `sandbox:watch` / `sandbox:destroy` |
-| PR previews | not yet | `pr-<n>-*` | Needs the domain (see below) |
+| PR previews | commented on each PR | `pr-<n>-*` | Every PR from this repository; torn down on close (own CloudFront site until there is a domain) |
 | Account | none | `account-access`, `account-ci-access` | `cdk deploy … -c env=account` as `listening-bar-admin` |
 
 All in AWS account 441659297085, us-west-2 (us-east-1 bootstrapped for future certificates).

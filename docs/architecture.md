@@ -92,7 +92,7 @@ against the registry, wraps the envelope, writes it to `room-state` if
 | Env | Front end | Back end |
 |---|---|---|
 | sandbox | local `pnpm dev` | `dev-<user>` stacks |
-| preview | shared PreviewSite distribution, `pr-<n>.preview.<domain>` | `pr-<n>` stacks |
+| preview | shared PreviewSite distribution, `pr-<n>.preview.<domain>` (until the domain exists: its own distribution) | `pr-<n>` stacks |
 | staging | own distribution | `staging` stacks |
 | production | own distribution, apex domain | `prod` stacks |
 
