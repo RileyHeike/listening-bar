@@ -75,7 +75,8 @@ The preview URL is commented on the PR.
 - **Once the domain exists:** one long-lived PreviewSite stack holds an S3 bucket with `/pr-<n>/` prefixes, one CloudFront distribution on `*.preview.<domain>`, and a CloudFront Function mapping host `pr-<n>.preview…` to the prefix.
   Each PR uploads its build to its prefix, including a `/config.json` with that PR's API and AppSync endpoints.
   Switching needs no workflow change: the workflows read the repository variable `BAR_DOMAIN`.
-- On PR close (`pr-close.yml`): delete the prefix (if any) and destroy the `pr-<n>` stacks.
+- On PR close (`pr-close.yml`): delete the prefix (if any), destroy the `pr-<n>` stacks, then delete the `/aws/lambda/pr-<n>-*` log groups that CDK's helper functions (bucket auto-delete, site upload) create at run time and the stacks therefore do not own.
+  Nothing billable is left behind.
 
 ## CI access
 
@@ -83,7 +84,7 @@ The preview URL is commented on the PR.
 
 - `bar-ci-release`: trusted for `main` and the `staging` and `production` GitHub Environments; may assume the CDK bootstrap roles.
   Exists before there is a domain, so staging and production deploy without one.
-- `bar-ci-preview`: trusted for pull requests only; may manage CloudFormation stacks named `pr-*`, read their Lambda logs, pass the execution role `bar-ci-preview-exec`, and (once the domain exists) upload to the shared preview bucket under `pr-*`.
+- `bar-ci-preview`: trusted for pull requests only; may manage CloudFormation stacks named `pr-*`, read their Lambda logs, delete leftover `/aws/lambda/pr-*` log groups, pass the execution role `bar-ci-preview-exec`, and (once the domain exists) upload to the shared preview bucket under `pr-*`.
 - `bar-ci-preview-exec`: the CloudFormation execution role for preview stacks (they use the CLI-credentials synthesizer and deploy with `--role-arn`).
   It may manage `pr-*` named resources (tables, functions, log groups, schedules, topics, roles, buckets, CloudFront functions) and the services whose resources have generated ids (AppSync, API Gateway, CloudFront distributions).
 - Both preview roles explicitly deny every action on resources tagged `env=production`, `env=staging`, `env=sandbox` or `env=account`, so a pull request can never change another environment even through a generated-id service.

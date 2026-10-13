@@ -253,6 +253,18 @@ export class CiAccessStack extends Stack {
               ],
             }),
             new PolicyStatement({
+              // Listing cannot be scoped further; it reveals names only.
+              sid: 'ListLogGroups',
+              actions: ['logs:DescribeLogGroups'],
+              resources: [named('logs', 'log-group:*')],
+            }),
+            new PolicyStatement({
+              // CDK's helper functions create log groups at run time that outlive the stacks.
+              sid: 'CleanUpPreviewLogs',
+              actions: ['logs:DeleteLogGroup'],
+              resources: [named('logs', 'log-group:/aws/lambda/pr-*')],
+            }),
+            new PolicyStatement({
               // Lets CDK name the exact action when a deploy is denied.
               sid: 'DiagnoseDeploys',
               actions: ['cloudtrail:LookupEvents'],
