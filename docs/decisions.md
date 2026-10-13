@@ -115,6 +115,8 @@ Chosen while building the foundation where nothing above decided; each is easy t
 | Real-time channel | `/<domain>/room` in each domain's namespace | Default |
 | CI access | Account-level `account-ci-access` stack: GitHub OIDC, release role, `pr-*`-scoped preview roles that can never touch resources tagged production, staging, sandbox or account | Default |
 | Cross-stack reference strength | Pinned to `strong` (exports, as settled above); CDK now recommends `weak` for new projects, which avoids two-step removals | Default |
+| Agent loop | Claude (GitHub Action, owner's subscription) implements `agent`-labelled issues, reviews every PR (required `agent-review` check) and fixes its own PRs' failures, at most three attempts per PR | Default |
+| Owner gate | Required `owner-gate` check: owner sign-off for CODEOWNERS paths, `needs-design-review` and `needs-owner`; approval on the latest commit or the `owner-approved` label | Default |
 | Visual regression | Screenshots compared with the latest `main` run (no committed baselines); under 0.05% of pixels is noise, 2% or more needs the owner's design review | Default |
 | Photo pipeline | Media bucket only; resizing Lambda not built until something uses photos | Default |
 

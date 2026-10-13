@@ -4,9 +4,11 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+# Agents' PRs queue instead of cancelling, so a fix job is not cut off by
+# the push it makes.
 concurrency:
   group: pr-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ !startsWith(github.head_ref, 'claude/') }}
 
 permissions:
   contents: read
@@ -184,3 +186,42 @@ jobs:
             const existing = comments.find((c) => c.body?.includes(marker));
             if (existing) await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
             else await github.rest.issues.createComment({ owner, repo, issue_number, body });
+
+  # Agents' PRs (claude/*) fix their own failures; at most three attempts per
+  # PR, shared with review fixes (.github/actions/agent-fix).
+  fix:
+    needs: [checks, pr-title, workflow-lint, generators, preview]
+    if: >-
+      failure()
+      && github.event_name == 'pull_request'
+      && startsWith(github.head_ref, 'claude/')
+      && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    concurrency:
+      group: agent-fix-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      actions: read
+      id-token: write
+    steps:
+      # The fix action itself comes from the base branch.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+      - uses: ./.github/actions/agent-fix
+        with:
+          pr: ${{ github.event.pull_request.number }}
+          sha: ${{ github.event.pull_request.head.sha }}
+          run-id: ${{ github.run_id }}
+          oauth-token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github-token: ${{ github.token }}
+          task: |
+            The "Pull request" workflow failed on this PR (${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+            The failed jobs' logs are in `.agent/logs/`. Find the cause and fix it.
+            If the failure is unrelated to this PR (an outage, a flaky external service), do not change code:
+            say so in a PR comment and stop.

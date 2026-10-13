@@ -314,6 +314,14 @@ describe('account stacks', () => {
     );
     expect(names.sort()).toEqual(['bar-ci-preview', 'bar-ci-preview-exec', 'bar-ci-release']);
     expect(JSON.stringify(roles)).toContain('repo:owner@1/listening-bar@2:environment:production');
+    const release = JSON.stringify(
+      Object.values(roles).find(
+        (r) =>
+          (r as { Properties: { RoleName?: string } }).Properties.RoleName === 'bar-ci-release',
+      ),
+    );
+    // Agent jobs triggered by issues run on main; only the deploy environments may release.
+    expect(release).not.toContain('refs/heads/main');
     ci.resourceCountIs('AWS::IAM::OIDCProvider', 1);
     ci.resourceCountIs('AWS::Lambda::Function', 0);
   });
