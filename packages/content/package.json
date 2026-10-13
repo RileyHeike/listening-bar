@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@bar/core": "workspace:*",
-    "marked": "18.0.14",
+    "marked": "18.1.0",
     "yaml": "2.9.1",
     "zod": "4.6.5"
   },
