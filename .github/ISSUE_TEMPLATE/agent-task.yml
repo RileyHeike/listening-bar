@@ -1,0 +1,49 @@
+name: Task
+description: A unit of work an agent (or a person) can implement and verify on its own.
+title: '<type>(<scope>): <what>'
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Write it so an agent can finish it without asking: the outcome, how to tell it's done, and what's out of scope.
+        Add the `agent` label to have a Claude agent pick it up; it opens a PR that merges itself once CI and review pass,
+        unless it touches owner-reviewed paths (see `.github/CODEOWNERS`) or raises a decision.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Station (front end)
+        - Module (back end)
+        - Event
+        - Page
+        - Content
+        - Design system
+        - Infrastructure / CI
+        - Tooling / docs
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What should exist or change, and why.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Observable checks. Include the page/slot for UI work.
+      placeholder: |
+        - [ ] …
+    validations:
+      required: true
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes, references, designs
