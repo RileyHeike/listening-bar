@@ -56,8 +56,13 @@ export default function generator(plop: PlopTypes.NodePlopAPI): void {
     ): PlopTypes.CustomActionFunction =>
     (answers) => {
       const files = paths(answers as Record<string, string>);
+      // A new workspace package must update the lockfile, even where CI makes
+      // installs frozen by default.
       if (install)
-        execFileSync('pnpm', ['install', '--prefer-offline'], { cwd: root, stdio: 'inherit' });
+        execFileSync('pnpm', ['install', '--prefer-offline', '--no-frozen-lockfile'], {
+          cwd: root,
+          stdio: 'inherit',
+        });
       execFileSync('pnpm', ['exec', 'prettier', '--write', '--log-level=warn', ...files], {
         cwd: root,
         stdio: 'inherit',
