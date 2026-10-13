@@ -104,13 +104,15 @@ export class CiAccessStack extends Stack {
 
     new CfnOutput(this, 'ReleaseRoleArn', { value: this.releaseRole.roleArn });
 
-    /** Never touch shared environments' resources (they are tagged env=…). */
+    /** Never touch other environments' resources (tagged env=…), including people's sandboxes. */
     const protectShared = new PolicyStatement({
       sid: 'ProtectSharedEnvironments',
       effect: Effect.DENY,
       actions: ['*'],
       resources: ['*'],
-      conditions: { StringEquals: { 'aws:ResourceTag/env': ['production', 'staging', 'account'] } },
+      conditions: {
+        StringEquals: { 'aws:ResourceTag/env': ['production', 'staging', 'sandbox', 'account'] },
+      },
     });
 
     this.previewExecutionRole = new Role(this, 'PreviewExecution', {

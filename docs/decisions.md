@@ -113,7 +113,7 @@ Chosen while building the foundation where nothing above decided; each is easy t
 | Runtime config | Deployed sites read `/config.json`; fixtures only in dev and `BAR_ENV=local` builds | Default |
 | Real-time auth | Public connect/subscribe via a Lambda authorizer (no expiring API keys); publish IAM only | Default |
 | Real-time channel | `/<domain>/room` in each domain's namespace | Default |
-| CI access | Account-level `account-ci-access` stack: GitHub OIDC, release role, `pr-*`-scoped preview roles that can never touch resources tagged production, staging or account | Default |
+| CI access | Account-level `account-ci-access` stack: GitHub OIDC, release role, `pr-*`-scoped preview roles that can never touch resources tagged production, staging, sandbox or account | Default |
 | Cross-stack reference strength | Pinned to `strong` (exports, as settled above); CDK now recommends `weak` for new projects, which avoids two-step removals | Default |
 | Photo pipeline | Media bucket only; resizing Lambda not built until something uses photos | Default |
 

@@ -318,7 +318,7 @@ describe('account stacks', () => {
     ci.resourceCountIs('AWS::Lambda::Function', 0);
   });
 
-  it('let previews manage their own resources but never shared environments', async () => {
+  it('let previews manage their own resources but never other environments', async () => {
     const { template } = await synth(
       { env: 'account' },
       { project: { github: { repository: 'owner/listening-bar', ownerId: 1, repositoryId: 2 } } },
@@ -332,7 +332,9 @@ describe('account stacks', () => {
         ),
       );
       expect(policy, role).toContain('"Sid":"ProtectSharedEnvironments"');
-      expect(policy, role).toMatch(/"aws:ResourceTag\/env":\["production","staging","account"\]/);
+      expect(policy, role).toMatch(
+        /"aws:ResourceTag\/env":\["production","staging","sandbox","account"\]/,
+      );
     }
     expect(json).toContain(':function/pr-*');
     expect(json).toContain('"Sid":"IdNamedServices"');

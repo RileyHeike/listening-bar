@@ -86,7 +86,7 @@ The preview URL is commented on the PR.
 - `bar-ci-preview`: trusted for pull requests only; may manage CloudFormation stacks named `pr-*`, read their Lambda logs, pass the execution role `bar-ci-preview-exec`, and (once the domain exists) upload to the shared preview bucket under `pr-*`.
 - `bar-ci-preview-exec`: the CloudFormation execution role for preview stacks (they use the CLI-credentials synthesizer and deploy with `--role-arn`).
   It may manage `pr-*` named resources (tables, functions, log groups, schedules, topics, roles, buckets, CloudFront functions) and the services whose resources have generated ids (AppSync, API Gateway, CloudFront distributions).
-- Both preview roles explicitly deny every action on resources tagged `env=production`, `env=staging` or `env=account`, so a pull request can never change a shared environment even through a generated-id service.
+- Both preview roles explicitly deny every action on resources tagged `env=production`, `env=staging`, `env=sandbox` or `env=account`, so a pull request can never change another environment even through a generated-id service.
 
 If a preview deploy is denied, find the action in CloudTrail and widen the exec role by exactly that action, scoped to `pr-*` where the service allows it.
 
