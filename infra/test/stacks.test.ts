@@ -337,6 +337,8 @@ describe('account stacks', () => {
       );
     }
     expect(json).toContain(':function/pr-*');
+    expect(json).toContain(':log-group:pr-*');
+    expect(json).toContain('cloudtrail:LookupEvents');
     expect(json).toContain('"Sid":"IdNamedServices"');
   });
 

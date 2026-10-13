@@ -129,6 +129,9 @@ export class CiAccessStack extends Stack {
                 named('lambda', 'function:pr-*'),
                 named('logs', 'log-group:/aws/lambda/pr-*'),
                 named('logs', 'log-group:/aws/lambda/pr-*:*'),
+                // Generated names start with the stack name (API access logs, authorizer logs).
+                named('logs', 'log-group:pr-*'),
+                named('logs', 'log-group:pr-*:*'),
                 named('scheduler', 'schedule/default/pr-*'),
                 named('sns', 'pr-*'),
               ],
@@ -244,7 +247,16 @@ export class CiAccessStack extends Stack {
             new PolicyStatement({
               sid: 'ReadPreviewLogs',
               actions: ['logs:FilterLogEvents', 'logs:GetLogEvents', 'logs:DescribeLogStreams'],
-              resources: [named('logs', 'log-group:/aws/lambda/pr-*:*')],
+              resources: [
+                named('logs', 'log-group:/aws/lambda/pr-*:*'),
+                named('logs', 'log-group:pr-*:*'),
+              ],
+            }),
+            new PolicyStatement({
+              // Lets CDK name the exact action when a deploy is denied.
+              sid: 'DiagnoseDeploys',
+              actions: ['cloudtrail:LookupEvents'],
+              resources: ['*'],
             }),
             ...(props.previews
               ? [

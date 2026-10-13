@@ -104,6 +104,21 @@ jobs:
         env:
           BAR_ENV: preview
         run: pnpm --filter @bar/web run build
+      # A stack whose first create failed cannot be updated, only deleted.
+      - name: Clear a failed earlier attempt
+        run: |
+          for stack in "pr-$PR-stateless" "pr-$PR-stateful"; do
+            status=$(aws cloudformation describe-stacks --stack-name "$stack" \
+              --query 'Stacks[0].StackStatus' --output text 2>/dev/null || true)
+            case "$status" in
+              ROLLBACK_COMPLETE | ROLLBACK_FAILED | DELETE_FAILED)
+                echo "Deleting $stack ($status)"
+                aws cloudformation delete-stack --stack-name "$stack" \
+                  --role-arn "arn:aws:iam::$ACCOUNT:role/bar-ci-preview-exec"
+                aws cloudformation wait stack-delete-complete --stack-name "$stack"
+                ;;
+            esac
+          done
       - name: Deploy pr-${{ env.PR }}
         working-directory: infra
         run: |
