@@ -113,7 +113,8 @@ jobs:
               '<!-- agent-review -->',
               `## ${icon} Agent review: ${verdict.replace('_', ' ')}`,
               '',
-              result.summary ?? 'The review did not return a verdict; see the run.',
+              result.summary ??
+                'The review did not run or returned no verdict. A PR that changes the agent workflows cannot be reviewed until they are on `main` (the action refuses to run modified workflows); the owner reviews it. Otherwise, see the run.',
             ];
             if (result.owner_question) lines.push('', `**Question for @${context.repo.owner}:** ${result.owner_question}`);
             if (findings.length > 0) {
