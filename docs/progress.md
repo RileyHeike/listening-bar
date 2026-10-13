@@ -1,64 +1,105 @@
-# Foundation build progress
+# Project progress and handoff
 
-Snapshot as of 2026-10-11.
-Phases refer to `docs/implementation-plan.md`.
+Snapshot as of 2026-10-12.
+Start here when resuming work; `docs/implementation-plan.md` is the original plan.
 
-## Status by phase
+## Where things stand
 
-| Phase | Status | Notes |
-|---|---|---|
-| 0 Repo bootstrap | Done | |
-| 1 `@bar/core` + `@bar/fixtures` | Done | |
-| 2 `@bar/tokens` / `@bar/ui` | Done | Visual matrix at `/dev/primitives` (dev only). |
-| 2b `@bar/content` | Done | |
-| 3 Site shell | Done | |
-| 4 `@bar/room` | Done | Includes the AppSync transport (Phase 7). |
-| 5 Stations | Done | 18 stations; Playwright smoke suite (34 tests, desktop + phone). |
-| 6 Control panel | Done | Absence from production builds is tested. |
-| 7 `@bar/server` + infra | Done | Sandbox `dev-rileyheike` deployed as the developer role; integration tests pass against it; sandbox mode updates a second browser live over AppSync. |
-| 8 Pipelines | Written, not run | Workflows pass actionlint; they need a GitHub repository, the account stacks and repository variables before the deploy jobs run. |
-| 9 Generators | Done | station, module, event, page; `tools/generators/smoke.sh` proves the output passes every check. |
-| 10 Docs pass | Done | `docs/how-to/`; contract docs updated to match the implementation. |
+The foundation (all ten phases of the implementation plan) is built, tested, and deployed.
+Every page still shows bracketed placeholder content and `[BAR NAME]`.
 
-`pnpm typecheck`, `pnpm lint`, `pnpm test` and `pnpm test:e2e` pass.
+| Phase | Status |
+|---|---|
+| 0 Repo bootstrap | Done |
+| 1 `@bar/core` + `@bar/fixtures` | Done |
+| 2 `@bar/tokens` / `@bar/ui` | Done (visual matrix at `/dev/primitives`, dev only) |
+| 2b `@bar/content` | Done |
+| 3 Site shell | Done |
+| 4 `@bar/room` (incl. AppSync transport) | Done |
+| 5 Stations (18) + Playwright suite (34 tests, desktop + phone) | Done |
+| 6 Control panel (dev only; absence from builds is tested) | Done |
+| 7 `@bar/server` + infra | Done; sandbox, staging and production deployed |
+| 8 Pipelines | Done; checks, staging and approval-gated production run on GitHub |
+| 9 Generators (station, module, event, page) | Done; `tools/generators/smoke.sh` |
+| 10 Docs pass | Done; `docs/how-to/`, contracts match the implementation |
 
-## To finish the foundation
+`pnpm typecheck`, `pnpm lint`, `pnpm test` and `pnpm test:e2e` pass locally and in CI.
 
-1. **GitHub (done 2026-10-11):** repository `RileyHeike/listening-bar`; `account-ci-access` deployed (GitHub OIDC provider, `bar-ci-release`); `AWS_ACCOUNT_ID` set; Environments `staging` and `production` (main only; production requires RileyHeike's approval).
-   Pushes to `main` deploy staging, then wait for approval to deploy production.
-2. **Domain (open decision):** once named and registered, set `project.domain`, deploy `-c env=account`, and set `BAR_DOMAIN`, `PREVIEW_BUCKET` and `PREVIEW_DISTRIBUTION_ID` from its outputs to turn on previews.
-   Validate the `pr-*`-scoped preview policies on the first preview.
+## Environments
 
-## Pending: scope the budget to this project
+| Environment | URL | Stacks | How it deploys |
+|---|---|---|---|
+| Production | https://dthhfue0q0cpk.cloudfront.net | `prod-stateful`, `prod-stateless` | Push to `main`, after staging, with RileyHeike's approval in GitHub |
+| Staging | https://d2v6lgq1xw1hwq.cloudfront.net | `staging-stateful`, `staging-stateless` | Every push to `main` |
+| Sandbox | local `pnpm dev` (proxies `/api`) | `dev-rileyheike-*` | `pnpm sandbox:deploy` / `sandbox:watch` / `sandbox:destroy` |
+| PR previews | not yet | `pr-<n>-*` | Needs the domain (see below) |
+| Account | none | `account-access`, `account-ci-access` | `cdk deploy … -c env=account` as `listening-bar-admin` |
 
-The account is shared with league-site, so the budget should count only resources tagged `project=listening-bar`.
-That tag becomes available for billing up to 24 hours after the first tagged resources (created 2026-10-11).
-Until then the deployed budget is account-wide; the tag-scoped version is in code but not deployed.
-Once available:
+All in AWS account 441659297085, us-west-2 (us-east-1 bootstrapped for future certificates).
+Production alarms go to SNS topic `prod-alarms`, subscribed and confirmed for rileyheike@gmail.com.
 
-```sh
-aws ce update-cost-allocation-tags-status --profile listening-bar-admin --region us-east-1 \
-  --cost-allocation-tags-status TagKey=project,Status=Active
-cd infra && AWS_PROFILE=listening-bar-admin pnpm exec cdk deploy account-access -c env=account
-```
+## Access
 
-## Account setup (done 2026-10-11)
+- **AWS:** `aws sso login --sso-session personal` (IAM Identity Center; shared with league-site).
+  - `listening-bar` profile: deploy-only `listening-bar-developer` role, for everyday work; the sandbox scripts use it automatically.
+  - `listening-bar-admin` profile: AdministratorAccess, for one-time setup only.
+  - Never use the root `default` profile.
+- **GitHub:** `RileyHeike/listening-bar` (public).
+  CI signs in to AWS through OIDC as `bar-ci-release`, which trusts GitHub's immutable subject `repo:RileyHeike@58667210/listening-bar@1414868033:…`.
+  Details: `docs/infrastructure.md` ("Access", "CI access").
 
-Account 441659297085: CDK bootstrapped in us-west-2 (already, shared) and us-east-1; `account-access` deployed (developer role, $5 budget to rileyheike@gmail.com); profiles `listening-bar-admin` and `listening-bar` added to `~/.aws/config` under the Identity Center session `personal` (renamed from `league-site`, which still works; backups alongside the file).
-The sandbox `dev-rileyheike` is running (about $0 idle); `pnpm sandbox:destroy` removes it.
+## Next steps
+
+1. **Scope the budget to this project.**
+   The account is shared with league-site; the deployed `listening-bar-monthly` budget ($5) is account-wide until the `project` cost allocation tag is active.
+   The tag appears in billing data up to 24 hours after tagged resources exist (created 2026-10-11).
+   The tag-scoped budget is in code, not yet deployed:
+
+   ```sh
+   aws sso login --sso-session personal
+   aws ce update-cost-allocation-tags-status --profile listening-bar-admin --region us-east-1 \
+     --cost-allocation-tags-status TagKey=project,Status=Active
+   cd infra && AWS_PROFILE=listening-bar-admin pnpm exec cdk deploy account-access -c env=account
+   ```
+
+   If the first command reports "Tag keys not found", wait and retry; do not deploy the scoped budget before the tag is active (it would report $0 and never alert).
+
+2. **Window placeholder fix (small).**
+   When the snapshot has no weather (true on staging and production today), the window stays on "Looking outside…" forever.
+   It should show a quiet fallback once the snapshot is ready, as the hi-fi does with "Between records".
+   Agreed with the owner as worth doing; not started.
+
+3. **Decisions only the owner can make** (open in `docs/decisions.md`):
+   - The bar's name and domain.
+     Needed for real URLs, PR previews and replacing `[BAR NAME]`.
+     Then: set `project.domain` in `infra/config/project.ts`, deploy `-c env=account`, set repository variables `BAR_DOMAIN`, `PREVIEW_BUCKET` and `PREVIEW_DISTRIBUTION_ID` from its outputs, and validate the `pr-*`-scoped preview policies on the first preview.
+   - Admin authentication for write routes (needed before anything writes data, e.g. making the contact form send).
+   - Review the "Foundation implementation defaults" table in `docs/decisions.md`, and approve the contract refinements below.
+
+4. **Make it the owner's.**
+   Replace the placeholder content in `packages/content/content/`, tune the design tokens, then build the first real feature with the generators (`docs/how-to/`).
+
+5. **Housekeeping.**
+   - Release PR #2 ("release 0.1.0") is open; merging it tags 0.1.0 and writes the changelog (owner's call).
+   - Dependabot PR #1 was failing because it bundled major upgrades; Dependabot now proposes minor and patch only, so close #1 if it lingers.
+   - Delete the duplicate `decisions.md` at the repo root (`docs/decisions.md` is current).
+   - Retire the root `default` profile in `~/.aws/config`; make sure the root user has MFA.
+   - GitHub's `ubuntu-latest` moves to Ubuntu 26 from 2026-10-19; watch the first CI run after that.
 
 ## Contract refinements to approve
 
-The contract docs now describe the implementation exactly; these are the refinements beyond the original text:
+The contract docs describe the implementation exactly; these go beyond the original text:
 
 - Station entries receive a `StationContext`; page definitions live in `apps/web/src/page-defs/`.
 - Stations read stores with `useRoomStore` and derive live state with `createRoomStore`.
-- Modules publish with `publish(type, data, { source })`; secrets are prefixed with the environment prefix (`SECRETS_PREFIX`).
+- Modules publish with `publish(type, data, { source })` from `@bar/server`; secrets are prefixed with the environment prefix (`SECRETS_PREFIX`).
 - Real-time events travel on `/<domain>/room`; one new event, `spins.updated`.
 
-See also the "Foundation implementation defaults" table in `docs/decisions.md`.
+## Working notes for agents
 
-## Housekeeping
-
-- `decisions.md` at the repo root duplicates `docs/decisions.md` (and lacks the new defaults table); consider deleting the root copy.
-- `AGENTS.md` is written by Turborepo for AI agents; it recommends keeping it committed.
+- Toolchain: mise is not installed on this machine; use `export PATH=$HOME/.nvm/versions/node/v24.21.0/bin:$PATH` (Node 24 + pnpm 11).
+- Astro 7 runs `astro dev` and `astro preview` in the background when it detects an AI agent; use `astro dev stop` and `astro dev logs`.
+  Playwright starts preview with `--ignore-lock` to keep it in the foreground.
+- New files matched by the eager station globs (e.g. a new `sleeve.svg`) need a dev-server restart.
+- The `gh` CLI here is old: it has no `gh variable` or `gh run view --json jobs`; use `gh api`.
+- Deploying anything to AWS or changing GitHub settings is outward-facing: confirm with the owner first.

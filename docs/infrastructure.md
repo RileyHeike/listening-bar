@@ -74,12 +74,23 @@ Each extension has CDK assertion tests.
 
 ## CI access
 
-`account-ci-access` creates the GitHub OIDC provider and two roles:
+`account-ci-access` (created once `project.github` is set) holds the account's GitHub OIDC provider (`AWS::IAM::OIDCProvider`; one per account, so other projects' roles should trust it rather than create another) and these roles:
 
 - `bar-ci-release`: trusted for `main` and the `staging` and `production` GitHub Environments; may assume the CDK bootstrap roles.
-- `bar-ci-preview`: trusted for pull requests only; may manage CloudFormation stacks named `pr-*`, upload to the preview bucket under `pr-*`, and pass the execution role `bar-ci-preview-exec`.
+  Exists before there is a domain, so staging and production deploy without one.
+- `bar-ci-preview` (created once previews exist, which needs the domain): trusted for pull requests only; may manage CloudFormation stacks named `pr-*`, upload to the preview bucket under `pr-*`, and pass the execution role `bar-ci-preview-exec`.
   Preview stacks use the CLI-credentials synthesizer and deploy with `--role-arn bar-ci-preview-exec`, whose permissions are limited to `pr-*` named resources and resources tagged `env=preview`.
   Validate these policies in the real account when first enabling previews; widen only what CloudFormation proves it needs.
+
+Trust uses GitHub's immutable OIDC subjects, `repo:<owner>@<owner id>/<name>@<repo id>:…` (`project.github` holds the ids).
+A renamed or re-created repository with the same name cannot assume the roles.
+
+GitHub configuration (repository `RileyHeike/listening-bar`):
+
+- Environments `staging` and `production`, deployable from `main` only; `production` requires RileyHeike's approval.
+- Repository variable `AWS_ACCOUNT_ID=441659297085`.
+- Actions may create pull requests (release-please).
+- Dependabot proposes grouped minor and patch updates only, with a 7-day cooldown; majors are upgraded deliberately.
 
 ## Pipelines (GitHub Actions, OIDC)
 
