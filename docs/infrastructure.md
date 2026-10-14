@@ -97,6 +97,8 @@ A renamed or re-created repository with the same name cannot assume the roles.
 
 GitHub configuration (repository `RileyHeike/listening-bar`):
 
+- Merge settings, the `main` ruleset (required checks, squash only, admin bypass only through a PR), CodeQL and Dependabot security updates are applied by `tools/repo/lock-in.sh` (owner runs it; safe to re-run).
+
 - Environments `staging` and `production`, deployable from `main` only; `production` requires RileyHeike's approval.
 - Repository variable `AWS_ACCOUNT_ID=441659297085`.
 - Actions may create pull requests (release-please).

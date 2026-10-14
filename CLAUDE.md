@@ -97,6 +97,17 @@ Owner-reviewed paths are listed in `.github/CODEOWNERS`; PRs touching them
 wait for the owner even when everything passes. Never approve PRs, merge
 with admin rights, push to `main`, or deploy staging/production yourself.
 
+## Project tooling for agents (`.claude/`)
+
+- `rules/`: area rules that load when you touch matching files (stations,
+  styles, events, modules, infra, workflows).
+- `skills/`: `/ship` (verify, self-review, PR with auto-merge), `/task`
+  (turn an idea into an agent-ready issue), `/aws-audit` (find leftovers).
+- `agents/`: `reviewer` (the same guide CI's agent review uses) and
+  `design-reviewer` (visual changes against the design system).
+- `settings.json`: permissions, no co-author trailers, and a hook that
+  formats each edited file and reports Stylelint problems immediately.
+
 ## Definition of done (every task)
 
 - `pnpm typecheck`, `pnpm lint`, `pnpm test` pass.

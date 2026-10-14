@@ -80,6 +80,23 @@ Thresholds are in `apps/web/visual/compare.ts`.
 | `needs-design-review` | the change alters the look beyond the visual threshold; waiting on the owner |
 | `owner-approved` | the owner signed off (for PRs under the owner's own account); only the owner adds it |
 
+## Project `.claude/` folder
+
+Shared by local sessions and the agents in GitHub (on PRs, the action uses the base branch's copy).
+
+| Path | What it does |
+|---|---|
+| `settings.json` | permissions (allow and deny lists), commit attribution off, and a `PostToolUse` hook (`tools/claude/after-edit.ts`) that formats each edited file and shows Stylelint problems in CSS and Astro files to Claude right away |
+| `rules/*.md` | area rules scoped with `paths:`: they load when Claude reads or edits matching files (stations and the site, styles, events, modules, infra, workflows) |
+| `skills/ship` | `/ship`: verify, self-review with the subagents, commit, open the PR from the template, enable auto-merge |
+| `skills/task` | `/task <idea>`: draft an agent-ready issue (goal, acceptance criteria, out of scope), create it once the owner approves |
+| `skills/aws-audit` | `/aws-audit`: read-only search for leftover preview and sandbox resources, with cleanup commands for the owner |
+| `agents/reviewer.md` | the review guide; CI's `agent-review` follows it, and locally it is the `reviewer` subagent |
+| `agents/design-reviewer.md` | reviews visual changes against `docs/design-system.md`, separating defects from design questions for the owner |
+
+Rules are guidance; settings, hooks and CI checks are enforced.
+Keep a rule short and point to the normative doc rather than restating it.
+
 ## Parallel work
 
 - In GitHub, each issue gets its own job and branch; any number run at once.
