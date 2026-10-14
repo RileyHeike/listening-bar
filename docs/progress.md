@@ -1,6 +1,6 @@
 # Project progress and handoff
 
-Snapshot as of 2026-10-12.
+Snapshot as of 2026-10-13.
 Start here when resuming work; `docs/implementation-plan.md` is the original plan.
 
 ## Where things stand
@@ -25,6 +25,17 @@ Every page still shows bracketed placeholder content and `[BAR NAME]`.
 
 `pnpm typecheck`, `pnpm lint`, `pnpm test` and `pnpm test:e2e` pass locally and in CI.
 
+Since then, the autonomous-agent pipeline is in place (details: `docs/agents.md`):
+
+| Piece | Status |
+|---|---|
+| Guardrails (CODEOWNERS, PR and issue templates, `.claude/settings.json`, Dependabot auto-merge) | Done |
+| Per-PR previews (own `pr-<n>` stacks and CloudFront site, seeded, E2E + integration + Lighthouse; full teardown on close) | Done, proven on PR #5 |
+| Visual comparison against `main` (26 screenshots, `needs-design-review` for big changes) | Done |
+| Agents: implement `agent`-labelled issues, `agent-review` on every PR, fix loop (3 attempts), `owner-gate` | Done; first live review approved PR #10 |
+| `.claude/` rules, skills (`/ship`, `/task`, `/aws-audit`), `design-reviewer`, edit hook | Done |
+| Lock-in: squash only, auto-merge, `main` ruleset with 8 required checks, CodeQL, Dependabot security updates (`tools/repo/lock-in.sh`) | Done |
+
 ## Environments
 
 | Environment | URL | Stacks | How it deploys |
@@ -45,8 +56,10 @@ Production alarms go to SNS topic `prod-alarms`, subscribed and confirmed for ri
   - `listening-bar-admin` profile: AdministratorAccess, for one-time setup only.
   - Never use the root `default` profile.
 - **GitHub:** `RileyHeike/listening-bar` (public).
-  CI signs in to AWS through OIDC as `bar-ci-release`, which trusts GitHub's immutable subject `repo:RileyHeike@58667210/listening-bar@1414868033:…`.
+  CI signs in to AWS through OIDC with GitHub's immutable subject `repo:RileyHeike@58667210/listening-bar@1414868033:…`: `bar-ci-release` only from the `staging`/`production` Environments, `bar-ci-preview` from pull requests (`pr-*` resources only).
   Details: `docs/infrastructure.md` ("Access", "CI access").
+- **Claude in GitHub:** the Claude GitHub App is installed; the repository secret `CLAUDE_CODE_OAUTH_TOKEN` (from `claude setup-token`) authenticates with the owner's subscription.
+  Regenerate it with `claude setup-token` if agent jobs start failing to authenticate.
 
 ## Next steps
 
@@ -64,10 +77,10 @@ Production alarms go to SNS topic `prod-alarms`, subscribed and confirmed for ri
 
    If the first command reports "Tag keys not found", wait and retry; do not deploy the scoped budget before the tag is active (it would report $0 and never alert).
 
-2. **Window placeholder fix (small).**
+2. **Window placeholder fix: the first job for the agent pipeline.**
    When the snapshot has no weather (true on staging and production today), the window stays on "Looking outside…" forever.
    It should show a quiet fallback once the snapshot is ready, as the hi-fi does with "Between records".
-   Agreed with the owner as worth doing; not started.
+   Agreed with the owner as worth doing; make it an issue with `/task`, then label it `agent`.
 
 3. **Decisions only the owner can make** (open in `docs/decisions.md`):
    - The bar's name and domain.
@@ -79,10 +92,15 @@ Production alarms go to SNS topic `prod-alarms`, subscribed and confirmed for ri
 4. **Make it the owner's.**
    Replace the placeholder content in `packages/content/content/`, tune the design tokens, then build the first real feature with the generators (`docs/how-to/`).
 
-5. **Housekeeping.**
+5. **AWS hygiene (cost and clutter).**
+   - Nightly production drift check (`cdk diff`): needs a read-only role trusted for a `drift` GitHub Environment.
+   - Retention periods for the CDK helper Lambdas' log groups in staging and production (they never expire today).
+   - Old CDK assets accumulate in the bootstrap bucket shared with league-site; check whether `cdk gc` is safe there before scheduling it.
+   - Run `/aws-audit` now and then.
+
+6. **Housekeeping.**
    - Release PR #2 ("release 0.1.0") is open; merging it tags 0.1.0 and writes the changelog (owner's call).
-   - Dependabot PR #1 was failing because it bundled major upgrades; Dependabot now proposes minor and patch only, so close #1 if it lingers.
-   - Delete the duplicate `decisions.md` at the repo root (`docs/decisions.md` is current).
+     Release PRs are opened with the workflow token, so no checks run on them; the owner merges with the admin bypass.
    - Retire the root `default` profile in `~/.aws/config`; make sure the root user has MFA.
    - GitHub's `ubuntu-latest` moves to Ubuntu 26 from 2026-10-19; watch the first CI run after that.
 
@@ -103,3 +121,5 @@ The contract docs describe the implementation exactly; these go beyond the origi
 - New files matched by the eager station globs (e.g. a new `sleeve.svg`) need a dev-server restart.
 - The `gh` CLI here is old: it has no `gh variable` or `gh run view --json jobs`; use `gh api`.
 - Deploying anything to AWS or changing GitHub settings is outward-facing: confirm with the owner first.
+  Claude Code's permission rules block agents from deploying the account stacks and from changing repository settings; prepare the change (a `cdk diff`, a script like `tools/repo/lock-in.sh`) and the owner runs it.
+- A PR that changes an agent workflow cannot get an `agent-review` verdict until the change is on `main` (claude-code-action refuses modified workflows); the owner merges such PRs.
