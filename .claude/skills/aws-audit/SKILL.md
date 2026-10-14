@@ -3,7 +3,8 @@ name: aws-audit
 description: Find AWS resources this project left behind (preview and sandbox stacks, orphaned log groups, buckets) and report what to clean up. Read-only. Use periodically or after closing PRs.
 ---
 
-Audit the project's AWS footprint in account 441659297085, us-west-2, with the read-only everyday profile: `--profile listening-bar --region us-west-2`.
+Audit the project's AWS footprint in account 441659297085, us-west-2, with the everyday developer profile, used read-only here: `--profile listening-bar --region us-west-2`.
+That profile can deploy sandboxes, so this skill relies on its own instructions, not IAM, to stay read-only.
 If the sign-in has expired, ask the owner to run `aws sso login --sso-session personal`.
 
 1. **Stacks.** `aws cloudformation describe-stacks` → every `pr-*` and `dev-*` stack with its status.

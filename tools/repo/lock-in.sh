@@ -17,7 +17,9 @@ gh api "repos/$REPO/labels/owner-approved" >/dev/null 2>&1 ||
   gh api "repos/$REPO/labels" -f name=owner-approved -f color=0e8a16 \
     -f description="The owner signed off (only the owner adds this)" >/dev/null
 
-echo "Security: Dependabot security updates, CodeQL default setup"
+echo "Security: Dependabot alerts and security updates, CodeQL default setup"
+# Security updates need alerts on first; both calls are idempotent.
+gh api -X PUT "repos/$REPO/vulnerability-alerts" >/dev/null
 gh api -X PUT "repos/$REPO/automated-security-fixes" >/dev/null
 gh api -X PATCH "repos/$REPO/code-scanning/default-setup" --input - >/dev/null <<'JSON'
 { "state": "configured", "languages": ["javascript-typescript", "actions"], "query_suite": "default" }
