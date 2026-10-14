@@ -84,8 +84,8 @@ Production alarms go to SNS topic `prod-alarms`, subscribed and confirmed for ri
 
 3. **Decisions only the owner can make** (open in `docs/decisions.md`):
    - The bar's name and domain.
-     Needed for real URLs, PR previews and replacing `[BAR NAME]`.
-     Then: set `project.domain` in `infra/config/project.ts`, deploy `-c env=account`, set repository variables `BAR_DOMAIN`, `PREVIEW_BUCKET` and `PREVIEW_DISTRIBUTION_ID` from its outputs, and validate the `pr-*`-scoped preview policies on the first preview.
+     Needed for real URLs and replacing `[BAR NAME]`; PR previews then move from their own CloudFront sites to the shared `pr-<n>.preview.<domain>` distribution.
+     Then: set `project.domain` in `infra/config/project.ts`, deploy `-c env=account`, set repository variables `BAR_DOMAIN`, `PREVIEW_BUCKET` and `PREVIEW_DISTRIBUTION_ID` from its outputs, and check the shared-bucket preview path on the next PR.
    - Admin authentication for write routes (needed before anything writes data, e.g. making the contact form send).
    - Review the "Foundation implementation defaults" table in `docs/decisions.md`, and approve the contract refinements below.
 
@@ -121,5 +121,6 @@ The contract docs describe the implementation exactly; these go beyond the origi
 - New files matched by the eager station globs (e.g. a new `sleeve.svg`) need a dev-server restart.
 - The `gh` CLI here is old: it has no `gh variable` or `gh run view --json jobs`; use `gh api`.
 - Deploying anything to AWS or changing GitHub settings is outward-facing: confirm with the owner first.
-  Claude Code's permission rules block agents from deploying the account stacks and from changing repository settings; prepare the change (a `cdk diff`, a script like `tools/repo/lock-in.sh`) and the owner runs it.
+  `.claude/settings.json` denies deploying shared and account stacks; repository-settings changes are not pre-approved (and the auto-mode classifier stops them).
+  Prepare the change (a `cdk diff`, a script like `tools/repo/lock-in.sh`) and the owner runs it.
 - A PR that changes an agent workflow cannot get an `agent-review` verdict until the change is on `main` (claude-code-action refuses modified workflows); the owner merges such PRs.
