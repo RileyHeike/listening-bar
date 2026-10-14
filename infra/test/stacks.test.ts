@@ -339,6 +339,24 @@ describe('account stacks', () => {
     expect(json).toContain(':function/pr-*');
     expect(json).toContain(':log-group:pr-*');
     expect(json).toContain('cloudtrail:LookupEvents');
+    // Deleting log groups is limited to preview Lambdas' groups.
+    const deletes = Object.values(roles)
+      .flatMap(
+        (role) =>
+          (
+            role as {
+              Properties: {
+                Policies?: {
+                  PolicyDocument: { Statement: { Action: unknown; Resource: unknown }[] };
+                }[];
+              };
+            }
+          ).Properties.Policies?.flatMap((p) => p.PolicyDocument.Statement) ?? [],
+      )
+      .filter((s) => [s.Action].flat().includes('logs:DeleteLogGroup'));
+    expect(deletes).toHaveLength(1);
+    expect(JSON.stringify(deletes[0]?.Resource)).toContain(':log-group:/aws/lambda/pr-*');
+    expect(JSON.stringify(deletes[0]?.Resource)).not.toMatch(/log-group:\*/);
     expect(json).toContain('"Sid":"IdNamedServices"');
   });
 

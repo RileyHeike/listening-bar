@@ -46,3 +46,16 @@ jobs:
         run: >
           pnpm exec cdk destroy --all -c env=preview -c "pr=$PR" --force
           --role-arn "arn:aws:iam::$ACCOUNT:role/bar-ci-preview-exec"
+      # CDK's helper functions (bucket auto-delete, site upload) create their
+      # own log groups at run time, so destroying the stacks leaves them.
+      # The trailing dash keeps PR 5 from matching PR 50.
+      - name: Delete pr-${{ env.PR }} log groups the stacks did not own
+        run: |
+          aws logs describe-log-groups --log-group-name-prefix "/aws/lambda/pr-$PR-" \
+            --query 'logGroups[].logGroupName' --output text | tr '\t' '\n' |
+            while read -r group; do
+              if [ -n "$group" ] && [ "$group" != None ]; then
+                echo "Deleting $group"
+                aws logs delete-log-group --log-group-name "$group"
+              fi
+            done
