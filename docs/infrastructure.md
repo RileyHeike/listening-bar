@@ -82,7 +82,8 @@ The preview URL is commented on the PR.
 
 `account-ci-access` (created once `project.github` is set) holds the account's GitHub OIDC provider (`AWS::IAM::OIDCProvider`; one per account, so other projects' roles should trust it rather than create another) and these roles:
 
-- `bar-ci-release`: trusted for `main` and the `staging` and `production` GitHub Environments; may assume the CDK bootstrap roles.
+- `bar-ci-release`: trusted only for jobs in the `staging` and `production` GitHub Environments (deployable from `main` only; production needs approval); may assume the CDK bootstrap roles.
+  Not trusted for every job on `main`: issue-triggered agent jobs run there too.
   Exists before there is a domain, so staging and production deploy without one.
 - `bar-ci-preview`: trusted for pull requests only; may manage CloudFormation stacks named `pr-*`, read their Lambda logs, delete leftover `/aws/lambda/pr-*` log groups, pass the execution role `bar-ci-preview-exec`, and (once the domain exists) upload to the shared preview bucket under `pr-*`.
 - `bar-ci-preview-exec`: the CloudFormation execution role for preview stacks (they use the CLI-credentials synthesizer and deploy with `--role-arn`).
@@ -106,10 +107,13 @@ GitHub configuration (repository `RileyHeike/listening-bar`):
 | Workflow | Trigger | Steps |
 |---|---|---|
 | `checks.yml` | reused | format, typecheck, lint, unit + CDK assertion tests, production-build check, Playwright on a local build |
-| `pr.yml` | PR open/sync | checks, PR title, workflow lint (actionlint + zizmor), generator smoke test when generator inputs change → deploy `pr-<n>` → seed fixtures → Playwright, integration tests, Lighthouse (warn) → comment preview URL |
+| `pr.yml` | PR open/sync | checks, PR title, workflow lint (actionlint + zizmor), generator smoke test when generator inputs change → deploy `pr-<n>` → seed fixtures → Playwright, integration tests, Lighthouse (warn) → comment preview URL; on agents' PRs, a failure starts a fix attempt |
 | `pr-close.yml` | PR closed | tear down preview |
 | `main.yml` | push to main | checks → deploy staging + smoke E2E → manual approval (GitHub Environment) → deploy prod + smoke |
 | `visual.yml` | push to main, PR | screenshot every page; on PRs compare with `main`, comment, and label big changes `needs-design-review` |
+| `agent-review.yml` | PR open/sync | Claude reviews against the rules and contracts (required `agent-review`); agents' PRs fix requested changes |
+| `owner-gate.yml` | PR events, reviews | required `owner-gate`: owner sign-off for owned paths and `needs-*` labels |
+| `agent.yml` | issue labelled `agent`; `@claude` comments | Claude implements the issue and opens a PR; answers or edits on request |
 | `release.yml` | push to main | release-please release PR / tags |
 
 Deploy jobs run only when the repository variable `AWS_ACCOUNT_ID` is set; once there is a domain, previews also read `BAR_DOMAIN`, `PREVIEW_BUCKET` and `PREVIEW_DISTRIBUTION_ID` (outputs of the account stacks).

@@ -1,0 +1,123 @@
+name: Agent fix
+description: >-
+  One fix attempt by Claude on an agent's pull request (branch claude/*):
+  read what failed, fix it, verify, push. At most three attempts per PR, then
+  the PR is handed to the owner (`needs-owner`). Skips when the PR has moved
+  on since the failure, or is waiting on the owner.
+
+inputs:
+  pr:
+    description: Pull request number
+    required: true
+  sha:
+    description: Head commit that failed; the attempt is skipped if the PR has moved on
+    required: true
+  task:
+    description: What to fix (CI failure or review findings), for the prompt
+    required: true
+  run-id:
+    description: A workflow run whose failed jobs' logs go to .agent/logs/ for Claude to read
+    required: false
+    default: ''
+  oauth-token:
+    description: CLAUDE_CODE_OAUTH_TOKEN
+    required: true
+  github-token:
+    description: Workflow token (pull-requests and issues write) for the attempt comment and labels
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - id: gate
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        REPO: ${{ github.repository }}
+        PR: ${{ inputs.pr }}
+        SHA: ${{ inputs.sha }}
+        MAX_ATTEMPTS: '3'
+      run: |
+        pr=$(gh api "repos/$REPO/pulls/$PR")
+        head=$(jq -r .head.sha <<<"$pr")
+        branch=$(jq -r .head.ref <<<"$pr")
+        if [ "$(jq -r .state <<<"$pr")" != open ] || [[ "$branch" != claude/* ]]; then
+          echo "Not an open agent PR; nothing to do."; echo "run=false" >> "$GITHUB_OUTPUT"; exit 0
+        fi
+        if jq -e '.labels[] | select(.name == "needs-owner")' <<<"$pr" >/dev/null; then
+          echo "Waiting on the owner; not fixing."; echo "run=false" >> "$GITHUB_OUTPUT"; exit 0
+        fi
+        if [ "$head" != "$SHA" ]; then
+          echo "The PR moved on ($SHA -> $head); the new commit gets its own checks."
+          echo "run=false" >> "$GITHUB_OUTPUT"; exit 0
+        fi
+        attempts=$(gh api --paginate "repos/$REPO/issues/$PR/comments" \
+          --jq '[.[] | select(.body | startswith("<!-- agent-fix-attempt -->"))] | length' |
+          awk '{ s += $1 } END { print s + 0 }')
+        if [ "$attempts" -ge "$MAX_ATTEMPTS" ]; then
+          gh api "repos/$REPO/issues/$PR/labels" -f "labels[]=needs-owner" >/dev/null
+          gh api "repos/$REPO/issues/$PR/comments" -f body="Stopping after $MAX_ATTEMPTS fix attempts; over to @${GITHUB_REPOSITORY_OWNER}." >/dev/null
+          echo "run=false" >> "$GITHUB_OUTPUT"; exit 0
+        fi
+        attempt=$((attempts + 1))
+        gh api "repos/$REPO/issues/$PR/comments" \
+          -f body="<!-- agent-fix-attempt -->Fix attempt $attempt of $MAX_ATTEMPTS: [run]($GITHUB_SERVER_URL/$REPO/actions/runs/$GITHUB_RUN_ID)" >/dev/null
+        {
+          echo "run=true"
+          echo "branch=$branch"
+        } >> "$GITHUB_OUTPUT"
+
+    - if: steps.gate.outputs.run == 'true'
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        ref: ${{ steps.gate.outputs.branch }}
+        fetch-depth: 0
+        persist-credentials: false
+    - name: Collect the failed jobs' logs
+      if: steps.gate.outputs.run == 'true' && inputs.run-id != ''
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        REPO: ${{ github.repository }}
+        RUN_ID: ${{ inputs.run-id }}
+      run: |
+        mkdir -p .agent/logs
+        gh api --paginate "repos/$REPO/actions/runs/$RUN_ID/jobs" \
+          --jq '.jobs[] | select(.conclusion == "failure") | "\(.id) \(.name)"' |
+          while read -r id name; do
+            file=".agent/logs/$(tr -c 'A-Za-z0-9-' '_' <<<"$name").log"
+            gh api "repos/$REPO/actions/jobs/$id/logs" > "$file" || true
+            echo "Collected $name"
+          done
+    - if: steps.gate.outputs.run == 'true'
+      uses: ./.github/actions/setup
+    - if: steps.gate.outputs.run == 'true'
+      shell: bash
+      run: pnpm --filter @bar/web exec playwright install --with-deps chromium
+
+    - if: steps.gate.outputs.run == 'true'
+      uses: anthropics/claude-code-action@cab360f6565aa35a51d6ce9e43f1f4287c0a32ea # v1.0.241
+      with:
+        claude_code_oauth_token: ${{ inputs.oauth-token }}
+        allowed_bots: claude[bot]
+        prompt: |
+          REPO: ${{ github.repository }}
+          PR NUMBER: ${{ inputs.pr }}
+          BRANCH: ${{ steps.gate.outputs.branch }} (checked out)
+
+          You are fixing your own pull request so it can merge. Follow CLAUDE.md.
+
+          ${{ inputs.task }}
+
+          1. Understand the failure or finding before changing anything. Read the PR with `gh pr view` and `gh pr diff`.
+          2. Make the smallest correct fix. Do not weaken, skip or delete tests or checks to get green; fix the cause.
+          3. Verify locally: `pnpm typecheck && pnpm lint && pnpm test`, plus `pnpm test:e2e` for anything visible.
+          4. Commit with a Conventional Commit message and push: `git push origin HEAD:${{ steps.gate.outputs.branch }}`.
+          5. Comment on the PR (`gh pr comment`) with what was wrong and what you changed, in two or three sentences.
+
+          If the fix needs a decision that is Open, Parked or not covered in docs/decisions.md, or a design call,
+          do not guess: comment the question with options and trade-offs, do not push, and say so in your final answer.
+        claude_args: |
+          --model claude-opus-5-5
+          --max-turns 120
+          --allowedTools "Read,Write,Edit,Glob,Grep,Bash(pnpm:*),Bash(node:*),Bash(tools/generators/smoke.sh:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git add:*),Bash(git commit:*),Bash(git push origin HEAD:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr checks:*),Bash(gh pr comment:*),Bash(gh run view:*),Bash(gh run list:*)"

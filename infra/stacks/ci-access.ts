@@ -84,11 +84,10 @@ export class CiAccessStack extends Stack {
 
     this.releaseRole = new Role(this, 'Release', {
       roleName: 'bar-ci-release',
-      assumedBy: github([
-        `${repo}:ref:refs/heads/main`,
-        `${repo}:environment:staging`,
-        `${repo}:environment:production`,
-      ]),
+      // Only jobs in the staging/production GitHub Environments (main only,
+      // production approval-gated). Not every job on main: issue-triggered
+      // agent jobs run on main too.
+      assumedBy: github([`${repo}:environment:staging`, `${repo}:environment:production`]),
       maxSessionDuration: Duration.hours(2),
       inlinePolicies: {
         cdk: new PolicyDocument({

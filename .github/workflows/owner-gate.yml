@@ -1,0 +1,45 @@
+name: Owner gate
+
+# Required check: routine PRs pass; PRs that touch owner-reviewed paths
+# (.github/CODEOWNERS) or carry `needs-design-review` / `needs-owner` wait for
+# the owner. Re-evaluated on every push, label change and review. Logic and
+# tests: tools/ci/owner-gate.ts.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+  pull_request_review:
+    types: [submitted, dismissed]
+
+concurrency:
+  group: owner-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  owner-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+    steps:
+      # The base branch, so a PR cannot change the rules it is judged by.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+      - id: node
+        run: echo "version=$(sed -n 's/^node = "\(.*\)"/\1/p' mise.toml)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ steps.node.outputs.version }}
+      - name: Evaluate
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          OWNER: ${{ github.repository_owner }}
+        run: node tools/ci/owner-gate.ts

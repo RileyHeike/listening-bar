@@ -1,0 +1,175 @@
+name: Agent review
+
+# Required check `agent-review`: Claude reviews every PR against CLAUDE.md,
+# the contracts and docs/decisions.md (guide: .claude/agents/reviewer.md),
+# including the visual comparison, and returns a verdict:
+#   approve          the check passes
+#   request_changes  the check fails; on agents' PRs (claude/*) Claude fixes it
+#   needs_owner      the check fails and the PR is labelled `needs-owner`
+# Dependabot PRs skip review (checks and the owner gate cover them).
+# External (fork) PRs fail: the owner reviews those.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: agent-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  agent-review:
+    if: >-
+      github.event.pull_request.draft == false
+      && github.event.pull_request.user.login != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      checks: read
+      actions: read
+      id-token: write
+    outputs:
+      verdict: ${{ steps.verdict.outputs.verdict }}
+    env:
+      PR: ${{ github.event.pull_request.number }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+    steps:
+      - name: External contributions go to the owner
+        if: github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          echo "PRs from forks are reviewed by the owner." >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      # The review looks at the screenshots too, so wait for them.
+      - name: Wait for the visual comparison
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          for _ in $(seq 1 60); do
+            status=$(gh api "repos/$REPO/commits/$HEAD_SHA/check-runs?check_name=capture" \
+              --jq '[.check_runs[].status] | if length == 0 then "missing" elif all(. == "completed") then "completed" else "running" end')
+            [ "$status" = completed ] && break
+            sleep 20
+          done
+          run=$(gh run list --repo "$REPO" --workflow visual.yml --commit "$HEAD_SHA" \
+            --json databaseId --jq '.[0].databaseId // empty')
+          mkdir -p .agent/visual
+          if [ -n "$run" ]; then
+            gh run download "$run" --repo "$REPO" --name visual-diff --dir .agent/visual || true
+          fi
+
+      - name: Review
+        id: review
+        uses: anthropics/claude-code-action@cab360f6565aa35a51d6ce9e43f1f4287c0a32ea # v1.0.241
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          allowed_bots: claude[bot]
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+            BASE: ${{ github.event.pull_request.base.sha }}
+            HEAD: ${{ github.event.pull_request.head.sha }} (checked out)
+
+            Review this pull request. Follow `.claude/agents/reviewer.md`: read it first, then everything it lists.
+            The diff: `git diff BASE...HEAD`; the description and linked issue: `gh pr view`.
+            The visual comparison with main, if any: `.agent/visual/report/summary.md`,
+            diff images in `.agent/visual/report/diff/`, screenshots in `.agent/visual/current/`.
+
+            For each blocking finding, also post an inline comment on the line with
+            mcp__github_inline_comment__create_inline_comment (confirmed: true).
+            Do not post a top-level comment; the workflow posts your summary.
+            Return the verdict as structured output.
+          claude_args: |
+            --model claude-opus-5-5
+            --max-turns 80
+            --allowedTools "Read,Glob,Grep,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh issue view:*),mcp__github_inline_comment__create_inline_comment"
+            --json-schema '{"type":"object","additionalProperties":false,"required":["verdict","summary","findings"],"properties":{"verdict":{"enum":["approve","request_changes","needs_owner"]},"summary":{"type":"string"},"owner_question":{"type":"string"},"findings":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["severity","file","comment"],"properties":{"severity":{"enum":["blocking","minor"]},"file":{"type":"string"},"line":{"type":"integer"},"comment":{"type":"string"}}}}}}'
+
+      - name: Report the verdict
+        id: verdict
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          RESULT: ${{ steps.review.outputs.structured_output }}
+        with:
+          script: |
+            const result = JSON.parse(process.env.RESULT || '{}');
+            const verdict = result.verdict ?? 'missing';
+            const findings = result.findings ?? [];
+            const icon = { approve: '✅', request_changes: '🛠️', needs_owner: '🙋' }[verdict] ?? '⚠️';
+            const lines = [
+              '<!-- agent-review -->',
+              `## ${icon} Agent review: ${verdict.replace('_', ' ')}`,
+              '',
+              result.summary ??
+                'The review did not run or returned no verdict. A PR that changes the agent workflows cannot be reviewed until they are on `main` (the action refuses to run modified workflows); the owner reviews it. Otherwise, see the run.',
+            ];
+            if (result.owner_question) lines.push('', `**Question for @${context.repo.owner}:** ${result.owner_question}`);
+            if (findings.length > 0) {
+              lines.push('', '| Severity | Where | Finding |', '|---|---|---|');
+              for (const f of findings) {
+                const where = `\`${f.file}${f.line ? `:${f.line}` : ''}\``;
+                lines.push(`| ${f.severity} | ${where} | ${f.comment.replace(/\n/g, ' ').replace(/\|/g, '\\|')} |`);
+              }
+            }
+            lines.push('', `[Run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) · commit ${process.env.HEAD_SHA.slice(0, 7)}`);
+            const body = lines.join('\n');
+            const { owner, repo } = context.repo;
+            const issue_number = Number(process.env.PR);
+            const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number });
+            const existing = comments.find((c) => c.body?.startsWith('<!-- agent-review -->'));
+            if (existing) await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            else await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            if (verdict === 'needs_owner')
+              await github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['needs-owner'] });
+            await core.summary.addRaw(body).write();
+            core.setOutput('verdict', verdict);
+            if (verdict !== 'approve') core.setFailed(`Agent review: ${verdict}`);
+
+  # Agents' PRs fix review findings themselves (shared attempt limit with CI fixes).
+  fix:
+    needs: agent-review
+    if: >-
+      always()
+      && needs.agent-review.outputs.verdict == 'request_changes'
+      && startsWith(github.event.pull_request.head.ref, 'claude/')
+      && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    concurrency:
+      group: agent-fix-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      actions: read
+      id-token: write
+    steps:
+      # The fix action itself comes from the base branch.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+      - uses: ./.github/actions/agent-fix
+        with:
+          pr: ${{ github.event.pull_request.number }}
+          sha: ${{ github.event.pull_request.head.sha }}
+          oauth-token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github-token: ${{ github.token }}
+          task: |
+            The agent review requested changes. The findings are in the PR's "Agent review" comment
+            and its inline comments (`gh pr view --comments`). Fix every blocking finding;
+            fix minor ones too when the fix is small and clearly right.
