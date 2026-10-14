@@ -26,6 +26,8 @@
 /.github/                    @RileyHeike
 /tools/generators/           @RileyHeike
 /tools/ci/                   @RileyHeike
+/tools/claude/               @RileyHeike
+/tools/repo/                 @RileyHeike
 /turbo.json                  @RileyHeike
 /pnpm-workspace.yaml         @RileyHeike
 /tsconfig.base.json          @RileyHeike

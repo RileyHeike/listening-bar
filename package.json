@@ -15,7 +15,7 @@
     "test:tools": "vitest run --dir tools",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint && pnpm run lint:root",
-    "lint:root": "eslint --max-warnings=0 \"*.config.js\" tools/ci && prettier --check .",
+    "lint:root": "eslint --max-warnings=0 \"*.config.js\" tools/ci tools/claude && prettier --check .",
     "format": "prettier --write .",
     "gen": "tsx tools/generators/cli.ts",
     "sandbox:deploy": "pnpm --filter @bar/infra run sandbox:deploy",
