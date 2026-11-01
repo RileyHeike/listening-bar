@@ -17,7 +17,7 @@
     "visual:compare": "tsx visual/compare.ts"
   },
   "dependencies": {
-    "@astrojs/react": "7.0.1",
+    "@astrojs/react": "7.1.1",
     "@bar/content": "workspace:*",
     "@bar/core": "workspace:*",
     "@bar/room": "workspace:*",
@@ -27,14 +27,14 @@
     "@fontsource/dm-mono": "5.3.0",
     "@fontsource/jost": "5.3.0",
     "@fontsource/shippori-mincho": "5.3.0",
-    "astro": "7.3.8",
-    "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "astro": "7.4.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
   },
   "devDependencies": {
-    "@astrojs/check": "0.9.10",
+    "@astrojs/check": "0.9.12",
     "@bar/fixtures": "workspace:*",
-    "@playwright/test": "1.64.0",
+    "@playwright/test": "1.64.1",
     "@types/node": "24.19.2",
     "@types/pngjs": "6.0.5",
     "@types/react": "19.3.0",
@@ -43,7 +43,7 @@
     "pngjs": "7.0.0",
     "tsx": "4.23.15",
     "typescript": "6.0.3",
-    "vite": "8.3.4",
-    "vitest": "5.0.3"
+    "vite": "8.3.5",
+    "vitest": "5.0.5"
   }
 }

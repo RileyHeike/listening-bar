@@ -23,8 +23,8 @@
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
-    "@astrojs/check": "0.9.10",
-    "@astrojs/react": "7.0.1",
+    "@astrojs/check": "0.9.12",
+    "@astrojs/react": "7.1.1",
     "@bar/content": "workspace:*",
     "@bar/core": "workspace:*",
     "@bar/fixtures": "workspace:*",
@@ -33,11 +33,11 @@
     "@bar/ui": "workspace:*",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
-    "astro": "7.3.8",
-    "react": "19.3.0",
-    "react-dom": "19.3.0",
+    "astro": "7.4.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "typescript": "6.0.3",
-    "vite": "8.3.4",
-    "vitest": "5.0.3"
+    "vite": "8.3.5",
+    "vitest": "5.0.5"
   }
 }
