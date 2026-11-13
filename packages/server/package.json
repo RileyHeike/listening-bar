@@ -26,7 +26,7 @@
     "@hono/aws-lambda": "1.0.0",
     "@smithy/signature-v4": "5.7.4",
     "dynamodb-toolbox": "2.11.0",
-    "hono": "4.13.13",
+    "hono": "4.13.16",
     "zod": "4.6.5"
   },
   "devDependencies": {
